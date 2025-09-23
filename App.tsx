@@ -1,61 +1,91 @@
-import React from 'react';
-import { StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+// App.tsx (React Native)
+import React, { useState } from "react";
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { LoginScreen } from "./src/screens/LoginScreen";
+import { SignupScreen } from "./src/screens/SignUpScreen";
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+type AuthState = "login" | "signup" | "authenticated";
 
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
+interface User {
+  name: string;
+  email: string;
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
+export default function App() {
+  const [authState, setAuthState] = useState<AuthState>("login");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  const handleLogin = (email: string, password: string) => {
+    setCurrentUser({
+      name: email === "demo@ejemplo.com" ? "Usuario Demo" : email.split("@")[0],
+      email,
+    });
+    setAuthState("authenticated");
+  };
+
+  const handleSignup = (name: string, email: string, _password: string) => {
+    setCurrentUser({ name, email });
+    setAuthState("authenticated");
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setAuthState("login");
+  };
+
+  if (authState === "login") {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <LoginScreen
+          onLogin={handleLogin}
+          onSwitchToSignup={() => setAuthState("signup")}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (authState === "signup") {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <SignupScreen
+          onSignup={handleSignup}
+          onSwitchToLogin={() => setAuthState("login")}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Autenticado: vista simple (placeholder)
   return (
-    <View style={[styles.container, { paddingTop: safeAreaInsets.top }]}>
-      {/* 👇 Aquí va tu contenido personalizado */}
-      <Text style={styles.title}>¡Hola Mundo!</Text>
-      <Text style={styles.title}>Kaizen🫀</Text>
-      <Text style={styles.subtitle}>Equipo 3 Grupo 34</Text>
-      <Text style={styles.content}>Life Tracker es una aplicación diseñada para ayudarte a construir y mantener hábitos saludables, gestionar tus metas y mejorar tu productividad diaria. Integra un temporizador Pomodoro, registro de hábitos y metas, además de un sistema de rachas que fomenta la constancia.</Text>
-      <Text style={styles.content}>Nuestro objetivo es ofrecer una experiencia ligera y motivadora, con recordatorios, estadísticas semanales y la opción de exportar tu progreso, de modo que puedas visualizar y compartir tus logros de forma clara y sencilla.</Text>
-    </View>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+        <Text style={styles.title}>¡Hola, {currentUser?.name}!</Text>
+        <Text style={styles.subtitle}>{currentUser?.email}</Text>
+
+        <TouchableOpacity onPress={handleLogout} style={styles.button} activeOpacity={0.8}>
+          <Text style={styles.buttonText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.note}>
+          En Construcción :)...
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+  safe: { flex: 1, backgroundColor: "#0b0b0c" },
+  container: { flex: 1, padding: 16, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 22, fontWeight: "700", color: "#fff" },
+  subtitle: { marginTop: 6, color: "#9ca3af" },
+  button: {
+    marginTop: 24,
+    backgroundColor: "#6f5cff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 10,
-    color: '#666',
-  },
-  content: {
-    fontSize: 13,
-    textAlign: 'justify',
-    color: '#010101',
-    margin: 2,
-    padding: 20
-  }
+  buttonText: { color: "#fff", fontWeight: "600" },
+  note: { marginTop: 20, color: "#9ca3af", textAlign: "center", fontSize: 12 },
 });
-
-export default App;
-
