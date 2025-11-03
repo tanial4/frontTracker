@@ -4,10 +4,8 @@ import {
   Text,
   ActivityIndicator,
   GestureResponderEvent,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
 } from "react-native";
+import { cn } from "../../lib/utils";
 
 type Variant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 type Size = "default" | "sm" | "lg" | "icon";
@@ -19,7 +17,48 @@ interface ButtonProps {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
+  className?: string; 
 }
+
+// -------------------------------------------------------------
+// CLASES BASE, VARIANTE Y TAMAÑO
+// -------------------------------------------------------------
+
+const getVariantClasses = (variant: Variant): string => {
+  switch (variant) {
+    case "destructive":
+      return "bg-destructive text-primary-foreground border-transparent hover:opacity-80";
+    case "outline":
+      return "bg-transparent text-foreground border border-border hover:bg-accent";
+    case "secondary":
+      return "bg-secondary text-foreground border-transparent hover:bg-accent";
+    case "ghost":
+      return "bg-transparent text-foreground border-transparent hover:bg-accent";
+    case "link":
+      return "bg-transparent text-primary border-transparent underline"; 
+    case "default":
+    default:
+      return "bg-primary text-primary-foreground border-transparent hover:opacity-80"; 
+  }
+};
+
+const getSizeClasses = (size: Size): string => {
+  switch (size) {
+    case "sm":
+      return "h-8 px-2.5 text-xs";
+    case "lg":
+      return "h-11 px-4 text-base";
+    case "icon":
+      return "w-9 h-9 p-0 flex-none";
+    case "default":
+    default:
+      return "h-9 px-3 text-sm";
+  }
+};
+
+// -------------------------------------------------------------
+// COMPONENTE BUTTON
+// -------------------------------------------------------------
 
 export function Button({
   children,
@@ -28,65 +67,44 @@ export function Button({
   variant = "default",
   size = "default",
   loading,
+  className,
 }: ButtonProps) {
-  const variantStyle = variantStyles[variant];
-  const sizeStyle = sizeStyles[size];
+  
+  const baseClasses = "rounded-md items-center justify-center flex-row font-medium transition-colors duration-150";
+
+  const indicatorColor = (
+      variant === "default" || variant === "destructive" ? "#fff" : 
+      variant === "link" ? "hsl(240 5.9% 90%)" : 
+      "hsl(240 10% 3.9%)"
+  );
 
   return (
     <TouchableOpacity
-      style={[styles.base, variantStyle, sizeStyle, disabled && styles.disabled]}
+      className={cn(
+        baseClasses,
+        getVariantClasses(variant),
+        getSizeClasses(size),
+        { 'opacity-50': disabled || loading }, 
+        className 
+      )}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={indicatorColor} />
       ) : typeof children === "string" ? (
-        <Text style={[styles.text, textStyles[variant]]}>{children}</Text>
+        <Text
+          className={cn(
+            "font-medium text-center", 
+            variant === "link" && "text-primary"
+          )}
+        >
+          {children}
+        </Text>
       ) : (
         children
       )}
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  text: {
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-});
-
-const variantStyles: Record<Variant, ViewStyle> = {
-  default: { backgroundColor: "#6f5cff", paddingVertical: 10, paddingHorizontal: 16 },
-  destructive: { backgroundColor: "#dc2626", paddingVertical: 10, paddingHorizontal: 16 },
-  outline: { borderWidth: 1, borderColor: "#6b7280", paddingVertical: 10, paddingHorizontal: 16 },
-  secondary: { backgroundColor: "#e5e7eb", paddingVertical: 10, paddingHorizontal: 16 },
-  ghost: { backgroundColor: "transparent", paddingVertical: 10, paddingHorizontal: 16 },
-  link: { backgroundColor: "transparent" },
-};
-
-const textStyles: Record<Variant, TextStyle> = {
-  default: { color: "#fff" },
-  destructive: { color: "#fff" },
-  outline: { color: "#111" },
-  secondary: { color: "#111" },
-  ghost: { color: "#111" },
-  link: { color: "#6f5cff", textDecorationLine: "underline" },
-};
-
-const sizeStyles: Record<Size, ViewStyle> = {
-  default: { minHeight: 36, paddingHorizontal: 12 },
-  sm: { minHeight: 32, paddingHorizontal: 10 },
-  lg: { minHeight: 44, paddingHorizontal: 18 },
-  icon: { width: 36, height: 36 },
-};

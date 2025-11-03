@@ -1,142 +1,140 @@
-import React, { useMemo, useState } from "react";
-import {
-  SafeAreaView, KeyboardAvoidingView, Platform,
-  View, Text, TextInput, TouchableOpacity,
-  ActivityIndicator, StyleSheet
-} from "react-native";
-import { Eye, EyeOff, Flame } from "lucide-react-native";
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FormInput } from '../components/forms/formInput'; 
+import { Button } from '../components/ui/button'; 
+import { cn } from '../lib/utils';
 
-const MIN_PASSWORD = 6;
-const isEmail = (v: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+import '../global.css'; 
+import { Flame } from 'lucide-react-native'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
+import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
 
-interface LoginScreenProps {
-  onLogin: (email: string, password: string) => void;
-  onSwitchToSignup: () => void;
-}
+type AuthStatus = 'loggedOut' | 'signedIn' | 'signingUp' | 'recovery';
 
-export function LoginScreen({ onLogin, onSwitchToSignup }: LoginScreenProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [touched, setTouched] = useState<{email:boolean; password:boolean}>({email:false, password:false});
+export default function LoginScreen() {
+    const insets = useSafeAreaInsets();
+    
+    const methods = useForm<LoginFormType>({
+        resolver: zodResolver(LoginSchema),
+        defaultValues: { email: '', password: '' },
+        mode: 'onBlur', 
+    });
 
-  const emailError = useMemo(() => {
-    if (!touched.email) return "";
-    if (!email.trim()) return "El correo es obligatorio";
-    if (!isEmail(email)) return "Ingresa un correo válido";
-    return "";
-  }, [email, touched.email]);
+    const { handleSubmit } = methods;
 
-  const passwordError = useMemo(() => {
-    if (!touched.password) return "";
-    if (!password) return "La contraseña es obligatoria";
-    if (password.length < MIN_PASSWORD) return `Mínimo ${MIN_PASSWORD} caracteres`;
-    return "";
-  }, [password, touched.password]);
+    const [localAuthState, setLocalAuthState] = useState<AuthStatus>('loggedOut'); 
+    const [isLoading, setIsLoading] = useState(false);
 
-  const canSubmit =
-    isEmail(email) && password.length >= MIN_PASSWORD && !isLoading;
+    const onSubmit = (data: LoginFormType) => {
+        setIsLoading(true);
+        setTimeout(() => {
+            setLocalAuthState('signedIn'); 
+            setIsLoading(false);
+        }, 1000);
+    };
 
-  const handleSubmit = () => {
-    setTouched({email:true, password:true});
-    if (!canSubmit) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      onLogin(email.trim(), password);
-      setIsLoading(false);
-    }, 600);
-  };
+    const handleSwitchToSignup = () => setLocalAuthState('signingUp');
+    const handleForgotPassword = () => setLocalAuthState('recovery');
+    const handleDemoLogin = () => console.log("Iniciando sesión como Demo");
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={styles.safe} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <View style={styles.logoBox}><Flame size={32} color="#fff" /></View>
-            <Text style={styles.title}>¡Bienvenido de vuelta!</Text>
-            <Text style={styles.subtitle}>Continúa con tus rachas junto a tus amigos</Text>
-          </View>
+    const isSubmitting = methods.formState.isSubmitting || isLoading;
 
-          <View style={styles.card}>
-            {/* Email */}
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              value={email}
-              onChangeText={(v)=>{ setEmail(v); if(!touched.email) setTouched(t=>({...t,email:true})); }}
-              onBlur={()=>setTouched(t=>({...t,email:true}))}
-              placeholder="tu@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={styles.input}
-              returnKeyType="next"
-            />
-            {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
-
-            {/* Password */}
-            <Text style={[styles.label,{marginTop:10}]}>Contraseña</Text>
-            <View style={styles.passwordWrapper}>
-              <TextInput
-                value={password}
-                onChangeText={(v)=>{ setPassword(v); if(!touched.password) setTouched(t=>({...t,password:true})); }}
-                onBlur={()=>setTouched(t=>({...t,password:true}))}
-                placeholder={`Mínimo ${MIN_PASSWORD} caracteres`}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[styles.input, styles.inputWithIcon]}
-                returnKeyType="done"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(s=>!s)} style={styles.eyeBtn} activeOpacity={0.7}>
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </TouchableOpacity>
-            </View>
-            {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
-
-            {/* Submit */}
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-              style={[styles.primaryBtn, !canSubmit && styles.btnDisabled]}
-              activeOpacity={0.8}
+    return (
+        <View 
+            className="flex-1 bg-background"
+            style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+        >
+            <KeyboardAvoidingView 
+                className="flex-1"
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-              {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Iniciar Sesión</Text>}
-            </TouchableOpacity>
+                <View className="flex-1 items-center px-6 pt-16 pb-10"> 
+                    <View className="items-center mb-10 bg-[#ff0000]" style={{ backgroundColor: '#ff0000' }}>
+                        <View className="w-16 h-16 rounded-2xl bg-black items-center justify-center mb-4 shadow-sm">
+                            <Flame size={32} color="#00ff00" />
+                        </View><Text className="text-[22px] font-bold text-foreground mb-1">¡Bienvenido de vuelta!</Text><Text className="text-muted-foreground text-base text-center">Continúa con tus rachas junto a tus amigos</Text>
+                    </View>
+                    <View 
+                        className="w-full max-w-sm border border-border bg-background rounded-xl p-6 shadow-lg"
+                    >
+                        <FormProvider {...methods}>
+                            <View className="space-y-4"> 
+                                <FormInput name="email" label="Email" keyboardType="email-address" autoCapitalize="none"/>
+                                <FormInput name="password" label="Contraseña" isPassword/>
+                                <Button 
+                                  onPress={handleSubmit(onSubmit)} 
+                                  variant="default"
+                                  className={cn("w-full mt-4 bg-muted border border-border", { "opacity-50": isSubmitting })}
+                                  disabled={isSubmitting}
+                                  loading={isSubmitting} 
+                              >
+                                  <Text className="text-primary-foreground font-semibold text-base">
+                                      Iniciar Sesión
+                                  </Text>
+                              </Button>
+                              <View className="flex flex-col items-end pt-8 space-y-6">
+                                  <TouchableOpacity
+                                      onPress={handleForgotPassword}
+                                      className="block self-end"
+                                  >
+                                      <Text className="font-medium no-underline text-primary text-sm">
+                                          ¿Olvidaste tu contraseña?
+                                      </Text>
+                                  </TouchableOpacity>
+                              </View>
+                            </View>
+                        </FormProvider>
+                    </View>
+                    <View className="mt-8 items-center">
+                      <View className="flex items-center justify-center pt-4">
+                        <Text className="text-sm text-muted-foreground">
+                            ¿No tienes cuenta?
+                            <Text 
+                                onPress={handleSwitchToSignup} 
+                                className="font-medium text-primary ml-1"
+                            >
+                              Regístrate
+                            </Text>
+                        </Text>
+                    </View>
+                    </View>
+                    <View className="mt-12 w-full max-w-sm rounded-xl border border-border bg-input-background p-4 shadow-sm">
+                        <Text className="text-foreground font-medium mb-3 text-center">
+                            Demo rápido:
+                        </Text>
+                        <Button 
+                            onPress={handleDemoLogin} 
+                            variant="secondary"
+                            className="w-full bg-secondary border border-border"
+                        >
+                            <Text className="text-foreground font-semibold text-base">
+                                Entrar como Demo
+                            </Text>
+                        </Button>
+                    </View>
 
-            {/* Enlace a registro */}
-            <View style={styles.centerRow}>
-              <Text style={styles.helperText}>¿No tienes cuenta? </Text>
-              <TouchableOpacity onPress={onSwitchToSignup}>
-                <Text style={styles.linkPrimary}>Crear cuenta</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                </View>
+            </KeyboardAvoidingView>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
+    );
 }
 
-const styles = StyleSheet.create({
-  safe:{flex:1,backgroundColor:"#0b0b0c"},
-  container:{flex:1,padding:16,justifyContent:"center"},
-  header:{alignItems:"center",marginBottom:24},
-  logoBox:{width:64,height:64,borderRadius:16,backgroundColor:"#6f5cff",alignItems:"center",justifyContent:"center",marginBottom:12},
-  title:{fontSize:22,fontWeight:"700",color:"#fff"},
-  subtitle:{color:"#9ca3af",marginTop:4,textAlign:"center"},
-  card:{backgroundColor:"#131316",borderRadius:16,padding:16},
-  label:{color:"#e5e7eb",fontSize:14},
-  input:{borderWidth:1,borderColor:"#26272b",backgroundColor:"#0e0f12",borderRadius:10,paddingHorizontal:12,paddingVertical:10,color:"#fff"},
-  passwordWrapper:{position:"relative"},
-  inputWithIcon:{paddingRight:40},
-  eyeBtn:{position:"absolute",right:8,top:0,bottom:0,width:32,alignItems:"center",justifyContent:"center"},
-  errorText:{color:"#ef4444",fontSize:12,marginTop:6},
-  primaryBtn:{backgroundColor:"#6f5cff",borderRadius:10,paddingVertical:12,alignItems:"center",marginTop:16},
-  primaryBtnText:{color:"#fff",fontWeight:"600"},
-  btnDisabled:{opacity:0.5},
-  centerRow:{flexDirection:"row",justifyContent:"center",marginTop:16,alignItems:"center"},
-  helperText:{color:"#9ca3af",fontSize:13},
-  linkPrimary:{color:"#6f5cff",fontSize:13,fontWeight:"600"},
-});
+const styles = {
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+  },
+};

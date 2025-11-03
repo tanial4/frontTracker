@@ -1,26 +1,31 @@
 import React from "react";
-import { TextInput, TextInputProps, StyleSheet } from "react-native";
+import { TextInput, TextInputProps } from "react-native";
+// Importamos la utilidad cn para combinar clases condicionales
+import { cn } from "../../lib/utils"; 
 
-interface InputProps extends TextInputProps {}
+// Definición de las clases base del Input
+const inputBaseClasses = "h-10 border border-border rounded-md px-3 text-sm text-foreground bg-input";
 
-export function Input({ ...props }: InputProps) {
+// Nota: Las props de TextInput ya incluyen las props de color y estilo.
+interface InputProps extends TextInputProps {
+  // Opcionalmente, puedes añadir una prop className para extender las clases base
+  className?: string; 
+}
+
+export function Input({ className, ...props }: InputProps) {
   return (
     <TextInput
-      style={styles.input}
-      placeholderTextColor="#9ca3af"
+      // Aplicamos las clases base y cualquier clase personalizada pasada por el padre
+      className={cn(
+        inputBaseClasses,
+        // Clases de enfoque (focus): Opcionalmente, puedes agregar estilos de enfoque
+        // que usarán tu color primario al activar el campo (si lo deseas):
+        "focus:border-primary", 
+        className 
+      )}
+      // Usamos el color de texto del tema 'muted-foreground' para el placeholder
+      placeholderTextColor="var(--muted-foreground)" 
       {...props}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    fontSize: 14,
-    color: "#111827",
-  },
-});

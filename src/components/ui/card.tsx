@@ -1,34 +1,51 @@
 import React from "react";
-import { View, Text, ViewProps, TextProps, StyleSheet } from "react-native";
-import { cn } from "./utils";
+import { View, Text, ViewProps, TextProps } from "react-native";
+import { cn } from "../../lib/utils";
 
-// Card contenedor principal
-function Card({ style, ...props }: ViewProps) {
-  return <View style={[styles.card, style]} {...props} />;
+const cardBaseClasses = "bg-card text-card-foreground rounded-xl border border-border flex-col";
+const cardHeaderClasses = "px-4 pt-4"; // pX: 16px, pT: 16px
+const cardTitleClasses = "text-lg font-bold"; // 18px, 700
+const cardDescriptionClasses = "text-sm text-muted-foreground mt-0.5"; // 14px, color secundario, mt: 2px
+const cardActionClasses = "self-end p-2"; // p: 8px
+const cardContentClasses = "px-4 pb-4"; // pX: 16px, pB: 16px
+const cardFooterClasses = "flex-row items-center px-4 pb-4";
+
+// Card Contenedor Principal
+function Card({ className, ...props }: ViewProps & { className?: string }) {
+  // Las clases 'bg-card', 'border-border', etc., se aplican directamente aquí
+  return (
+    <View
+      className={cn(
+        cardBaseClasses, 
+        className // Aplica clases personalizadas del padre
+      )}
+      {...props}
+    />
+  );
 }
 
-function CardHeader({ style, ...props }: ViewProps) {
-  return <View style={[styles.cardHeader, style]} {...props} />;
+function CardHeader({ className, ...props }: ViewProps & { className?: string }) {
+  return <View className={cn(cardHeaderClasses, className)} {...props} />;
 }
 
-function CardTitle({ style, ...props }: TextProps) {
-  return <Text style={[styles.cardTitle, style]} {...props} />;
+function CardTitle({ className, ...props }: TextProps & { className?: string }) {
+  return <Text className={cn(cardTitleClasses, className)} {...props} />;
 }
 
-function CardDescription({ style, ...props }: TextProps) {
-  return <Text style={[styles.cardDescription, style]} {...props} />;
+function CardDescription({ className, ...props }: TextProps & { className?: string }) {
+  return <Text className={cn(cardDescriptionClasses, className)} {...props} />;
 }
 
-function CardAction({ style, ...props }: ViewProps) {
-  return <View style={[styles.cardAction, style]} {...props} />;
+function CardAction({ className, ...props }: ViewProps & { className?: string }) {
+  return <View className={cn(cardActionClasses, className)} {...props} />;
 }
 
-function CardContent({ style, ...props }: ViewProps) {
-  return <View style={[styles.cardContent, style]} {...props} />;
+function CardContent({ className, ...props }: ViewProps & { className?: string }) {
+  return <View className={cn(cardContentClasses, className)} {...props} />;
 }
 
-function CardFooter({ style, ...props }: ViewProps) {
-  return <View style={[styles.cardFooter, style]} {...props} />;
+function CardFooter({ className, ...props }: ViewProps & { className?: string }) {
+  return <View className={cn(cardFooterClasses, className)} {...props} />;
 }
 
 export {
@@ -40,40 +57,3 @@ export {
   CardDescription,
   CardContent,
 };
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    flexDirection: "column",
-  },
-  cardHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  cardAction: {
-    alignSelf: "flex-end",
-    padding: 8,
-  },
-  cardContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-});
