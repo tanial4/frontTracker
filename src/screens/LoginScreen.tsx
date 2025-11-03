@@ -6,13 +6,19 @@ import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
 import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button'; 
 
-import { Flame } from 'lucide-react-native'; // Para el icono de la llama
-import { Eye } from 'lucide-react-native'; // Para el icono de visibilidad/ojo
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Para los insets de Safe Area
+import { Flame } from 'lucide-react-native';
+import { Eye } from 'lucide-react-native'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 
 type AuthStatus = 'loggedOut' | 'signedIn' | 'signingUp' | 'recovery';
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+    onLogin: (data: LoginFormType) => void; 
+    onSwitchToSignup: () => void;
+    onSwitchToRecovery: () => void;
+}
+
+export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecovery }: LoginScreenProps) {
     const insets = useSafeAreaInsets();
     
     const methods = useForm<LoginFormType>({
@@ -22,11 +28,11 @@ export default function LoginScreen() {
     });
 
     const { handleSubmit } = methods;
-    const { isSubmitting, errors } = methods.formState; // Obtener errores del formulario
+    const { isSubmitting, errors } = methods.formState; 
 
     const [localAuthState, setLocalAuthState] = useState<AuthStatus>('loggedOut'); 
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // Para el control de visibilidad de contraseña
+    const [showPassword, setShowPassword] = useState(false); 
 
     const onSubmit = (data: LoginFormType) => {
         setIsLoading(true);
@@ -42,17 +48,18 @@ export default function LoginScreen() {
     const handleSwitchToSignup = () => {
         console.log("Navegar a Registro");
         setLocalAuthState('signingUp');
+        onSwitchToSignup();
     };
     const handleForgotPassword = () => {
         console.log("Navegar a Recuperar Contraseña");
         setLocalAuthState('recovery');
+        onSwitchToRecovery();
     };
     const handleDemoLogin = () => {
         console.log("Iniciando sesión como Demo");
-        // Lógica para login demo (ej. rellenar formulario y enviar)
         methods.setValue('email', 'demo@example.com');
         methods.setValue('password', 'password');
-        handleSubmit(onSubmit)(); // Enviar el formulario demo
+        handleSubmit(onSubmit)(); 
     };
 
     return (
@@ -65,7 +72,6 @@ export default function LoginScreen() {
                     contentContainerStyle={styles.scrollViewContent} 
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Sección Superior: Logo y Títulos */}
                     <View style={styles.headerContainer}>
                         <View style={styles.logoWrapper}>
                             <Flame size={32} color={COLORS.iconColor} />
@@ -73,12 +79,9 @@ export default function LoginScreen() {
                         <Text style={styles.title}>¡Bienvenido de vuelta!</Text>
                         <Text style={styles.subtitle}>Continúa con tus rachas junto a tus amigos</Text>
                     </View>
-
-                    {/* Contenedor del Formulario (Tarjeta) */}
                     <View style={styles.formCard}>
                         <FormProvider {...methods}>
                             <View style={styles.inputGroup}>
-                                {/* Input de Email */}
                                 <FormInput 
                                     name="email" 
                                     label="Email" 
@@ -86,30 +89,25 @@ export default function LoginScreen() {
                                     autoCapitalize="none"
                                     placeholder="ejemplo@correo.com"
                                 />
-                                {/* Input de Contraseña */}
                                 <FormInput 
                                     name="password" 
                                     label="Contraseña" 
-                                    isPassword={!showPassword} // Controla la visibilidad
+                                    isPassword={!showPassword} 
                                     secureTextEntry={!showPassword}
                                     placeholder="••••••••"
-                                    // Icono de ojo para toggle de contraseña
                                     rightIcon={
                                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.passwordToggle}>
                                             <Eye size={20} color={COLORS.textMuted} />
                                         </TouchableOpacity>
                                     }
                                 />
-                                {/* Enlace de Olvidaste Contraseña */}
                                 <TouchableOpacity 
                                     onPress={handleForgotPassword} 
                                     style={styles.forgotPasswordButton}
                                 >
-                                    <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+                                    <Text style={styles.forgotPasswordText} onPress={handleForgotPassword}>¿Olvidaste tu contraseña?</Text>
                                 </TouchableOpacity>
                             </View>
-
-                            {/* Botón de Iniciar Sesión */}
                             <Button 
                                 onPress={handleSubmit(onSubmit)} 
                                 style={[
@@ -117,14 +115,12 @@ export default function LoginScreen() {
                                     
                                 ]}
                                 textStyle={styles.loginButtonText}
-                                isLoading={isSubmitting} // Pasamos la prop isLoading al componente Button
+                                isLoading={isSubmitting}
                             >
                                 Iniciar Sesión
                             </Button>
                         </FormProvider>
                     </View>
-
-                    {/* Enlace a Registro */}
                     <View style={styles.signupContainer}>
                         <Text style={styles.signupText}>
                             ¿No tienes cuenta?{' '}
@@ -133,8 +129,6 @@ export default function LoginScreen() {
                             </Text>
                         </Text>
                     </View>
-
-                    {/* Sección de Login Demo */}
                     <View style={styles.demoCard}>
                         <Text style={styles.demoTitle}>Demo rápido:</Text>
                         <Button 
@@ -151,16 +145,14 @@ export default function LoginScreen() {
     );
 }
 
-// 🚨 Paleta de Colores Hardcodeada (por ahora, hasta que definas un tema) 🚨
-// Puedes usar tus valores Hex de tu global.css aquí
 const COLORS = {
-    // Paleta de Colores (Light Mode)
+    
     background: '#FFFFFF',
     textPrimary: '#000000',
     textSecondary: '#717182',
     textMuted: '#717182',
-    primary: '#030213', // Naranja/Amarillo (Acento)
-    buttonPrimaryBg: '#717182', // Gris de los botones
+    primary: '#7c3aed', 
+    buttonPrimaryBg: '#717182',
     buttonPrimaryText: '#FFFFFF',
     buttonSecondaryBg: '#f0f0f0', 
     borderColor: '#e5e7eb',
@@ -170,7 +162,6 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
-    // --- Layout Base ---
     safeArea: { flex: 1, backgroundColor: COLORS.background },
     keyboardAvoidingView: { flex: 1 },
     scrollViewContent: {
@@ -181,18 +172,21 @@ const styles = StyleSheet.create({
         paddingBottom: 20,     
     },
 
-    // --- Header ---
     headerContainer: { alignItems: 'center', marginBottom: 30 },
     logoWrapper: {
         width: 60, height: 60, borderRadius: 15,
-        backgroundColor: COLORS.buttonPrimaryBg, 
+        backgroundColor: COLORS.primary, 
         alignItems: 'center', justifyContent: 'center',
         marginBottom: 12,
     },
     title: { fontSize: 20, fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: 3 },
     subtitle: { color: COLORS.textSecondary, fontSize: 14, textAlign: 'center' },
 
-    // --- Formulario (Tarjeta) ---
+    passwordToggle: { 
+        padding: 8,
+
+    },
+
     formCard: {
         width: '100%', maxWidth: 380,
         borderWidth: 1, borderColor: COLORS.borderColor,
@@ -203,9 +197,9 @@ const styles = StyleSheet.create({
     },
     inputGroup: { gap: 12, marginBottom: 20 },
 
-    // --- Botones y Enlaces ---
+  
     loginButton: {
-        backgroundColor: COLORS.buttonPrimaryBg,
+        backgroundColor: COLORS.primary,
         paddingVertical: 10, borderRadius: 8,
     },
     loginButtonText: {
@@ -216,12 +210,10 @@ const styles = StyleSheet.create({
     forgotPasswordButton: { alignSelf: 'flex-end', marginTop: 12 },
     forgotPasswordText: { fontWeight: '500', color: COLORS.textMuted, fontSize: 13 },
     
-    // --- Footer ---
     signupContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, marginTop: 32 },
     signupText: { fontSize: 14, color: COLORS.textMuted },
     signupLink: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14 },
 
-    // --- Demo Rápido ---
     demoCard: {
         marginTop: 30, width: '100%', maxWidth: 380,
         borderRadius: 12, borderWidth: 1,
@@ -233,7 +225,7 @@ const styles = StyleSheet.create({
     },
     demoTitle: { color: COLORS.textPrimary, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
     demoButton: {
-        backgroundColor: COLORS.background, // Botón secundario blanco
+        backgroundColor: COLORS.background,
         borderColor: COLORS.borderColor,
         borderWidth: 1,
         paddingVertical: 10,

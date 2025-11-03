@@ -19,7 +19,6 @@ export const SignupSchema = z.object({
     .max(50, { message: 'La contraseña no puede exceder los 50 caracteres' }),
 })
 
-    // Validación de coincidencia de contraseñas
     .refine((data) => data.password === data.confirmPassword, {
       message: 'Las contraseñas no coinciden',
       path: ['confirmPassword'],

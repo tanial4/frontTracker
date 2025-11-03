@@ -5,7 +5,7 @@ interface ButtonProps {
   onPress: () => void;
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
-  // 🚨 FIX DE TIPADO: Propiedad 'textStyle' añadida 🚨
+
   textStyle?: TextStyle | TextStyle[]; 
   isLoading?: boolean;
   disabled?: boolean;
@@ -22,7 +22,6 @@ export function Button({ onPress, children, style, textStyle, isLoading = false,
       activeOpacity={0.7}
     >
       {isLoading ? (
-        // Usamos un color de contraste, asumiendo un fondo oscuro del botón
         <ActivityIndicator color="#FFFFFF" /> 
       ) : (
         <Text style={[styles.buttonText, textStyle]}>{children}</Text>

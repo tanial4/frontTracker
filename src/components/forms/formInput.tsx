@@ -48,14 +48,12 @@ export function FormInput({ name, label, isPassword = false, isInvalid, ...props
           </TouchableOpacity>
         )}
       </View>
-      
-      {/* Mensaje de Error */}
+
       {error?.message && <Text style={inputStyles.errorText}>{error.message}</Text>}
     </View>
   );
 }
 
-// Colores específicos para el Input
 const COLORS = {
     inputBorder: '#e5e7eb', 
     inputBackground: '#f9fafb', 

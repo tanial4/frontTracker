@@ -4,31 +4,26 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Flame } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// 🚨 Asegúrate de importar los componentes de UI y el esquema
 import { FormInput } from '../components/forms/formInput'; 
 import { Button } from '../components/ui/button'; 
-import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema'; // Tu esquema Zod
+import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema'; 
 
-// Definiciones de Colores y Estilos (deben ser las mismas que LoginScreen)
+
 const COLORS = {
-    // Paleta de Colores (Light Mode)
     background: '#FFFFFF',
     textPrimary: '#000000',
-    textSecondary: '#717182',
     textMuted: '#717182',
-    primary: '#030213', // Naranja/Amarillo (Acento)
-    buttonPrimaryBg: '#717182', // Gris de los botones
+    primary: '#fff', 
+    buttonPrimaryBg: '#7c3aed',
     buttonPrimaryText: '#FFFFFF',
-    buttonSecondaryBg: '#f0f0f0', 
     borderColor: '#e5e7eb',
     errorText: '#d4183d',
     inputBackground: '#f9fafb',
-    iconColor: '#fff' 
+    textSecondary: '#717182',
 };
 
 interface SignupScreenProps {
-    onSignup: (data: SignUpFormType) => void; // Recibe los datos validados
+    onSignup: (data: SignUpFormType) => void; 
     onSwitchToLogin: () => void;
 }
 
@@ -50,7 +45,6 @@ export function SignupScreen({ onSignup, onSwitchToLogin }: SignupScreenProps) {
 
     const onSubmit = (data: SignUpFormType) => {
         console.log('Datos de Registro:', data);
-        // Lógica de registro (llamada a API)
         onSignup(data); 
     };
 
@@ -62,51 +56,36 @@ export function SignupScreen({ onSignup, onSwitchToLogin }: SignupScreenProps) {
             >
                 <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
                     
-                    {/* Sección Superior: Logo y Títulos */}
                     <View style={styles.headerContainer}>
                         <View style={styles.logoWrapper}>
-                            {/* Ícono de Logo (púrpura) */}
                             <Flame size={32} color={COLORS.primary} />
                         </View>
                         <Text style={styles.title}>Crear cuenta</Text>
                         <Text style={styles.subtitle}>Únete y comienza tus rachas con amigos</Text>
                     </View>
-
-                    {/* Contenedor del Formulario (Tarjeta) */}
                     <View style={styles.formCard}>
                         <FormProvider {...methods}>
                             <View style={styles.inputGroup}>
-                                {/* Campo Nombre Completo */}
                                 <FormInput name="username" label="Nombre completo" placeholder="Tu nombre" />
-                                
-                                {/* Campo Email */}
                                 <FormInput name="email" label="Email" keyboardType="email-address" placeholder="tu@email.com" />
-                                
-                                {/* Campo Contraseña */}
                                 <FormInput name="password" label="Contraseña" isPassword={true} placeholder="Mínimo 6 caracteres" />
-                                
-                                {/* Campo Confirmar Contraseña */}
                                 <FormInput name="confirmPassword" label="Confirmar contraseña" isPassword={true} placeholder="Confirma tu contraseña" />
-                                
-                                {/* Botón de Crear Cuenta */}
                                 <Button 
                                     onPress={handleSubmit(onSubmit)} 
-                                    style={[styles.loginButton, isSubmitting && styles.buttonDisabled]}
-                                    textStyle={styles.signupButtonText} // Usar el estilo de texto adecuado
+                                    style={[styles.loginButton]}
+                                    textStyle={styles.signupButtonText} 
                                     isLoading={isSubmitting}
                                 >
-                                    Crear Cuenta
+                                    <Text>Crear Cuenta</Text>
                                 </Button>
                             </View>
                         </FormProvider>
                     </View>
-
-                    {/* Enlace a Iniciar Sesión */}
                     <View style={styles.loginLinkContainer}>
                         <Text style={styles.loginLinkText}>
-                            ¿Ya tienes cuenta?{' '}
-                            <Text onPress={onSwitchToLogin} style={styles.loginLink}>
-                                Iniciar sesión
+                            ¿Ya tienes cuenta?
+                            <Text onPress={onSwitchToLogin} style={styles.loginLinkText}>
+                                {' '}Iniciar sesión
                             </Text>
                         </Text>
                     </View>
