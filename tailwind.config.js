@@ -1,24 +1,28 @@
 /** @type {import('tailwindcss').Config} */
-const nativewind = require("nativewind/preset");
+
+// 🚨 1. Importar el preset de NativeWind (Crucial para el funcionamiento) 🚨
+const nativewind = require("nativewind/preset"); 
 
 module.exports = {
-  // Configura el Modo Oscuro para que use la clase CSS (.dark)
+  // Configuración del Modo Oscuro basada en la clase CSS (.dark)
   darkMode: 'class', 
 
-  // Usa el preset de NativeWind
-  presets: [nativewind],
+  // 🚨 2. Usar el preset de NativeWind 🚨
+  presets: [nativewind], 
   
-  // Rastrea todos los archivos donde se usarán clases de Tailwind
+  // Rutas donde Tailwind debe buscar las clases para generarlas
   content: [
-    "./App.tsx",
-    "./src/**/*.{js,jsx,ts,tsx,css}",
+    "./App.{js,jsx,ts,tsx}",
+    "./src/**/*.{js,jsx,ts,tsx,css}", // Rastreo completo de src/
+    "./components/**/*.{js,jsx,ts,tsx}",
   ],
 
   theme: {
+    // La propiedad 'extend' fusiona tu configuración con la de Tailwind, no la reemplaza
     extend: {
       colors: {
         // Mapeo de Colores Temáticos (Consumen las Variables CSS)
-        // Esto crea clases como 'bg-background', 'border-primary', 'text-foreground', etc.
+        // Esto crea clases como 'bg-background', 'text-foreground', 'border-border', etc.
         'background': 'var(--background)',
         'foreground': 'var(--foreground)',
         
@@ -28,7 +32,6 @@ module.exports = {
         },
         'secondary': {
           DEFAULT: 'var(--secondary)',
-          // Asumiendo que el texto sobre secondary usa foreground por defecto, si no, defínelo aquí
         },
         
         'muted': {
@@ -40,7 +43,7 @@ module.exports = {
         'destructive': 'var(--destructive)',
         
         'border': 'var(--border)',
-        'input': 'var(--input-background)', // Usado para 'bg-input'
+        'input': 'var(--input-background)',
         
         // Mapeo de Colores de Categorías (Hex)
         'pomodoro': '#ef4444',
@@ -50,7 +53,7 @@ module.exports = {
         'meditacion': '#8b5cf6',
         'agua': '#06b6d4',
         
-        // Mapeo de Colores de Gráficos
+        // Mapeo de Colores de Gráficos (Consumen las Variables CSS)
         'chart': {
            1: 'var(--chart-1)',
            2: 'var(--chart-2)',
@@ -59,7 +62,16 @@ module.exports = {
            5: 'var(--chart-5)',
         },
       },
+      
+      // Mapeo de Border Radius y Font Size (Basado en la información adicional que proporcionaste)
+      borderRadius: {
+        'lg': '0.625rem', // Para un radio de 10px
+      },
+      fontSize: {
+        // Establece una base para que 'text-sm' sea 14px, si es necesario
+        'sm': ['14px', { lineHeight: '20px' }],
+      },
     },
   },
   plugins: [],
-}
+};
