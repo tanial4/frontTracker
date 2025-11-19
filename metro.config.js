@@ -1,9 +1,13 @@
 // metro.config.js
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withNativeWind } = require("nativewind/metro");
 
-const baseConfig = getDefaultConfig(__dirname);
-const mergedConfig = mergeConfig(baseConfig, {});
+const defaultConfig = getDefaultConfig(__dirname);
 
-// ✅ ESTO ES CORRECTO: Le dice a Metro que use NativeWind para procesar el CSS
-module.exports = withNativeWind(mergedConfig, { input: "./src/global.css" });
+const config = {
+  transformer: {
+    // 👇 fuerza la ruta correcta del registry de assets
+    assetRegistryPath: require.resolve('react-native/Libraries/Image/AssetRegistry'),
+  },
+};
+
+module.exports = mergeConfig(defaultConfig, config);

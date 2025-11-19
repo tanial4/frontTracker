@@ -28,6 +28,13 @@ export const ProfileSchema = z.object({
         .string().min(1, { message: 'Ingrese un correo electrónico' })
         .email("Ingresa un correo válido"),
         
+    bio: z
+        .string()
+        .max(150, { message: "La biografía no puede exceder los 150 caracteres" }).optional(),
+
+    location: z
+        .string()
+        .max(100, { message: "La ubicación no puede exceder los 100 caracteres" }).optional(),
 }); 
 
     

@@ -9,8 +9,14 @@ import { Button } from '../components/ui/button';
 import { Flame } from 'lucide-react-native';
 import { Eye } from 'lucide-react-native'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
+import { TemplateCard } from '../components/goals/templateGoaldCard';
+import { GOAL_TEMPLATES } from '../data/GoalsTypes';
+import { MOCK_CATEGORIES } from '../data/Categories';
+import { CreateGoalForm } from '../components/forms/CreateGoalForm';
+import { BRAND_COLORS as COLORS } from '../styles/Colors';
+import { globalLayout } from '../styles/GlobalStyles';
 
-type AuthStatus = 'loggedOut' | 'signedIn' | 'signingUp' | 'recovery';
+type AuthStatus = 'loggedOut' | 'signedIn' | 'signingUp' | 'recovery' | 'authenticated';
 
 interface LoginScreenProps {
     onLogin: (data: LoginFormType) => void; 
@@ -37,12 +43,14 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
     const onSubmit = (data: LoginFormType) => {
         setIsLoading(true);
         console.log("Datos de inicio de sesión:", data);
+        setLocalAuthState('authenticated');
         // Simular una llamada a API
         setTimeout(() => {
-            setLocalAuthState('signedIn'); // O redirigir
+            setLocalAuthState('authenticated'); // O redirigir
             setIsLoading(false);
             console.log("Inicio de sesión simulado exitoso.");
         }, 1500);
+        onLogin(data);
     };
 
     const handleSwitchToSignup = () => {
@@ -66,7 +74,6 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
         <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
             <KeyboardAvoidingView 
                 style={styles.keyboardAvoidingView}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
                 <ScrollView 
                     contentContainerStyle={styles.scrollViewContent} 
@@ -74,7 +81,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
                 >
                     <View style={styles.headerContainer}>
                         <View style={styles.logoWrapper}>
-                            <Flame size={32} color={COLORS.iconColor} />
+                            <Flame size={32} color={COLORS.LOGO_FLAME} />
                         </View>
                         <Text style={styles.title}>¡Bienvenido de vuelta!</Text>
                         <Text style={styles.subtitle}>Continúa con tus rachas junto a tus amigos</Text>
@@ -97,7 +104,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
                                     placeholder="••••••••"
                                     rightIcon={
                                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.passwordToggle}>
-                                            <Eye size={20} color={COLORS.textMuted} />
+                                            <Eye size={20} color={COLORS.TEXT_MUTED} />
                                         </TouchableOpacity>
                                     }
                                 />
@@ -110,15 +117,9 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
                             </View>
                             <Button 
                                 onPress={handleSubmit(onSubmit)} 
-                                style={[
-                                    styles.loginButton, 
-                                    
-                                ]}
-                                textStyle={styles.loginButtonText}
                                 isLoading={isSubmitting}
-                            >
-                                Iniciar Sesión
-                            </Button>
+                                children={<Text>Iniciar Sesión</Text>}
+                            />
                         </FormProvider>
                     </View>
                     <View style={styles.signupContainer}>
@@ -136,7 +137,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
                             style={styles.demoButton}
                             textStyle={styles.demoButtonText}
                         >
-                            Entrar como Demo
+                            <Text>Iniciar como Demo</Text>
                         </Button>
                     </View>
                 </ScrollView>
@@ -145,24 +146,9 @@ export default function LoginScreen({ onLogin, onSwitchToSignup, onSwitchToRecov
     );
 }
 
-const COLORS = {
-    
-    background: '#FFFFFF',
-    textPrimary: '#000000',
-    textSecondary: '#717182',
-    textMuted: '#717182',
-    primary: '#7c3aed', 
-    buttonPrimaryBg: '#717182',
-    buttonPrimaryText: '#FFFFFF',
-    buttonSecondaryBg: '#f0f0f0', 
-    borderColor: '#e5e7eb',
-    errorText: '#d4183d',
-    inputBackground: '#f9fafb',
-    iconColor: '#fff' 
-};
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: COLORS.background },
+    safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND},
     keyboardAvoidingView: { flex: 1 },
     scrollViewContent: {
         flexGrow: 1, 
@@ -179,8 +165,8 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         marginBottom: 12,
     },
-    title: { fontSize: 20, fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: 3 },
-    subtitle: { color: COLORS.textSecondary, fontSize: 14, textAlign: 'center' },
+    title: { fontSize: 20, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY, marginBottom: 3 },
+    subtitle: { color: COLORS.TEXT_SECONDARY, fontSize: 14, textAlign: 'center' },
 
     passwordToggle: { 
         padding: 8,
@@ -189,47 +175,39 @@ const styles = StyleSheet.create({
 
     formCard: {
         width: '100%', maxWidth: 380,
-        borderWidth: 1, borderColor: COLORS.borderColor,
-        backgroundColor: COLORS.background,
+        borderWidth: 1, borderColor: COLORS.GRAY_BORDER,
+        backgroundColor: COLORS.INPUT_BG,
         borderRadius: 12, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1, shadowRadius: 3, elevation: 3,
     },
     inputGroup: { gap: 12, marginBottom: 20 },
 
-  
-    loginButton: {
-        backgroundColor: COLORS.primary,
-        paddingVertical: 10, borderRadius: 8,
-    },
-    loginButtonText: {
-        color: COLORS.buttonPrimaryText, fontSize: 15, fontWeight: '600',
-    },
     buttonDisabled: { opacity: 0.5 },
 
     forgotPasswordButton: { alignSelf: 'flex-end', marginTop: 12 },
-    forgotPasswordText: { fontWeight: '500', color: COLORS.textMuted, fontSize: 13 },
+    forgotPasswordText: { fontWeight: '500', color: COLORS.TEXT_MUTED, fontSize: 13 },
     
     signupContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, marginTop: 32 },
-    signupText: { fontSize: 14, color: COLORS.textMuted },
+    signupText: { fontSize: 14, color: COLORS.TEXT_MUTED },
     signupLink: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14 },
 
     demoCard: {
         marginTop: 30, width: '100%', maxWidth: 380,
         borderRadius: 12, borderWidth: 1,
-        borderColor: COLORS.borderColor,
-        backgroundColor: COLORS.inputBackground, 
+        borderColor: COLORS.GRAY_BORDER,
+        backgroundColor: COLORS.INPUT_BG,
         padding: 16,
         shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
     },
-    demoTitle: { color: COLORS.textPrimary, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
+    demoTitle: { color: COLORS.TEXT_PRIMARY, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
     demoButton: {
-        backgroundColor: COLORS.background,
-        borderColor: COLORS.borderColor,
+        backgroundColor: COLORS.BACKGROUND,
+        borderColor: COLORS.GRAY_BORDER,
         borderWidth: 1,
         paddingVertical: 10,
         borderRadius: 8,
     },
-    demoButtonText: { color: COLORS.textPrimary, fontWeight: '600', fontSize: 15 },
+    demoButtonText: { color: COLORS.TEXT_PRIMARY, fontWeight: '600', fontSize: 15 },
 });

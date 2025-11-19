@@ -4,29 +4,33 @@ import LoginScreen from './src/screens/LoginScreen';
 import { SignupScreen } from './src/screens/SignUpScreen';
 import { PasswordRecoveryScreen } from './src/screens/PasswordRecoveryScreen';
 import { EditProfileScreen } from './src/screens/EditProfileScreen';
-import { MOCK_USER_DATA } from './src/data/mockData';
+import { MOCK_USER_DATA, MOCK_USER_PROFILE } from './src/data/TestUserData';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { CreateGoalScreen } from './src/screens/CreateGoalScreen';
 
-type AuthState = "login" | "signup" | "authenticated" | "passwordRecovery" | "profileSetup" | "editingProfile"; 
 
-interface User {
-  name: string;
-  email: string;
-  memberSince: string; 
-  // Añade cualquier otra propiedad que uses en tu objeto MOCK_USER_DATA
-}
+type AuthState = "login" | "signup" | "authenticated" | "passwordRecovery" | "profileSetup" | "editingProfile" | "creatingGoal"; 
+
+const initialUserData = {
+    ...MOCK_USER_PROFILE, // Copia todas las propiedades de Profile
+    email: MOCK_USER_DATA.email, // Agrega las propiedades específicas
+    createdAt: MOCK_USER_DATA.createdAt, 
+};
 
 export default function App() {
-  const [authState, setAuthState] = useState<AuthState>("authenticated"); 
+  const [authState, setAuthState] = useState<AuthState>("creatingGoal");
 
-  const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USER_DATA);
+  const [currentUser, setCurrentUser] = useState<Profile & { email: string; createdAt: Date; } | null>(initialUserData);
 
   const handleLogin = (data: { email: string; password: string }) => { 
+      console.log(data)
       setAuthState("authenticated"); 
+      console.log(setAuthState)
   };
 
   const handleSignup = (data: { username: string; email: string; password: string; confirmPassword: string }) => { 
-      setAuthState("authenticated"); 
+      setAuthState("login"); 
+      console.log(data)
   };
 
   const handleLogout = () => {
@@ -57,13 +61,18 @@ export default function App() {
     setAuthState('authenticated');
   };
 
+  const handleCreateGoal = (data: any) => {
+    console.log("Creando meta:", data);
+    setAuthState('authenticated');
+  };
+
   return (
     <SafeAreaProvider>
 
       {authState === "login" && <LoginScreen onLogin={handleLogin} onSwitchToSignup={handleSwitchToSignup} onSwitchToRecovery={handleSwitchToRecovery} />} 
       {authState === "signup" && <SignupScreen onSignup={handleSignup} onSwitchToLogin={handleSwitchToLogin} />}
       {authState === "passwordRecovery" && <PasswordRecoveryScreen onGoBack={handleSwitchToLogin} onRecoveryLinkSent={() => setAuthState("login")} />}
-      {authState === "authenticated" && currentUser && (
+      {/* {authState === "authenticated" && currentUser && (
         <ProfileScreen 
           user={currentUser}
           stats={currentUser ? { achievements: 10, longestStreak: 5 } : { achievements: 0, longestStreak: 0 }}
@@ -74,21 +83,11 @@ export default function App() {
             }
           }}
         />
-      )}
+      )} */}
       {authState === "profileSetup" && currentUser && (
-      <EditProfileScreen
-        // 1. Pasa la data inicial para que el formulario se pre-rellene (si es necesario)
-        initialData={currentUser} 
-        
-        // 2. Pasa la función para guardar el formulario (onSave)
-        onSave={handleSaveProfile} 
-        
-        // 3. Pasa la función para cancelar y volver (onCancel)
-        onCancel={handleCancelEdit} 
-        
-        // El resto de las props no son necesarias en la llamada principal
-    />
-)}
+      <EditProfileScreen/>)}
+      {authState === "creatingGoal" && (
+      <CreateGoalScreen onGoBack={() => setAuthState('authenticated')} onGoalCreated={handleCreateGoal} />)}
     </SafeAreaProvider>
   );
 }

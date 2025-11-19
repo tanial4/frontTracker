@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 import { globalLayout, formComponentStyles } from '../styles/GlobalStyles'; 
 import { BottomNavigationBar } from '../components/navigation/navBar';
-import { MOCK_USER_DATA, MOCK_USER_STATS, ACTIVE_ROUTE } from '../data/mockData';
+import { MOCK_USER_DATA, MOCK_USER_STATS, ACTIVE_ROUTE } from '../data/TestUserData';
 
 interface ProfileScreenProps {
     // Props simuladas del usuario autenticado
-    user?: { name: string; email: string; memberSince: string; }; 
+    user?: Profile & { email: string; createdAt: Date; };
     stats: { achievements: number; longestStreak: number; };
     onLogout: () => void;
     onNavigate: (route: string) => void;
@@ -44,11 +44,11 @@ export function ProfileScreen({ user, stats, onLogout, onNavigate }: ProfileScre
                 <View style={styles.profileHeader}>
                     {/* Avatar (letra U en círculo púrpura) */}
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{user?.name.charAt(0)}</Text>
+                        <Text style={styles.avatarText}>{user?.fullName.charAt(0)}</Text>
                     </View>
-                    <Text style={styles.userName}>{user?.name}</Text>
+                    <Text style={styles.userName}>{user?.fullName}</Text>
                     <Text style={styles.userEmail}>{user?.email}</Text>
-                    <Text style={styles.memberSince}>Miembro desde {user?.memberSince}</Text>
+                    <Text style={styles.memberSince}>Miembro desde {user?.createdAt.toLocaleDateString()}</Text>
 
                     {/* Botón de Editar Perfil */}
                     <TouchableOpacity style={styles.editButton} onPress={() => onNavigate('EditProfile')}>

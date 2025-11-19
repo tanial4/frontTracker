@@ -54,6 +54,7 @@ export function EditProfileScreen() {
             email: 'demo@ejemplo.com',
             bio: 'Apasionado por el desarrollo personal y la productividad. 🚀',
             location: 'Madrid, España',
+            memberSince: 'Enero 2024',
         } as ProfileFormType,
         mode: 'onBlur',
     });
@@ -161,7 +162,7 @@ export function EditProfileScreen() {
                         <Text style={styles.sectionTitle}>Información de Cuenta</Text>
                         <View style={[styles.formCard, styles.buttonContainer]}>
                             <Button onPress={handleCancel} style={styles.cancelButton} textStyle={styles.cancelButtonText}>
-                                Cancelar
+                                <Text>Cancelar</Text>
                             </Button>
                             <Button 
                                 onPress={handleSubmit(onSubmit)} 
@@ -170,7 +171,7 @@ export function EditProfileScreen() {
                                 disabled={isSubmitting || !isValid}
                                 isLoading={isSubmitting}
                             >
-                                Guardar Cambios
+                                <Text>Guardar Cambios</Text>
                             </Button>
                         </View>
                         
