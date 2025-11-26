@@ -1,201 +1,311 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch } from 'react-native';
-import { FormProvider, useForm, Controller, UseFormReturn } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, Plus, Sun, Users } from 'lucide-react-native'; 
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { UseFormReturn } from 'react-hook-form';
 
-// 🚨 Importaciones de Componentes Modulares 🚨
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
-import { formComponentStyles } from '../../styles/GlobalStyles'; 
-import { FormInput } from './formInput'; 
-import { FormSelect, SelectOption } from './FormSelect';
-import { FormDaySelector } from './FormDaySelector';
-import { FormToggle } from './FormToggle';
-import { Button } from '../ui/button'; 
-import { GoalSchema, GoalFormType } from '../../schemas/createGoalSchema'; 
-import { TARGET_TYPE_OPTIONS, TIME_OPTIONS } from '../../data/Options';
+import { FormInput } from './formInput';
+import { FormSelect } from './FormSelect';
+import { Button } from '../ui/button';
+import { GoalFormType } from '../../schemas/createGoalSchema';
+import { GoalTemplate } from '../../types/goal';
+import { TARGET_TYPE_OPTIONS } from '../../data/Options';
 import { CATEGORIES } from '../../data/Categories';
 import { FormDate } from './FormDate';
-import DatePicker from 'react-native-date-picker';
 
-
-
-interface GoalTemplate { id: string; title: string; description?: string | null; categoryId: string; targetType: 'DAILY' | 'WEEKLY' | number; targetValue?: number; }
-
-// Lógica auxiliar para valores por defecto (basada en la plantilla)
+// Función auxiliar para calcular los valores iniciales.
+// Si recibimos una plantilla (template), pre-llenamos los campos para agilizar la creación.
+// Si no, devolvemos valores por defecto limpios.
 const getFormDefaults = (template?: GoalTemplate): GoalFormType => {
-    const targetType = template?.targetType || 'DAILY';
-    return {
-        name: template?.title || '', description: template?.description || '', categoryId: template?.categoryId || '',
-        targetType: targetType, 
-        startDate: new Date(), 
-        // ✅ Asegura que el valor inicial sea null para el campo opcional
-        endDate: null,
-    } as GoalFormType;
+  return {
+    name: template?.title || '',
+    description: template?.description || '',
+    categoryId: template?.categoryId || '',
+    // Aseguramos que el tipo de objetivo sea válido según nuestras opciones de UI
+    targetType:
+      template && (template.targetType === 'WEEKLY' || template.targetType === 'DAILY')
+        ? (template.targetType as any)
+        : 'DAILY',
+    startDate: new Date(),
+    endDate: new Date(),
+  };
 };
 
-
 interface CreateGoalFormProps {
-    onCancel: () => void;
-    methods: UseFormReturn<GoalFormType>;
-    allCategories: any[];
-    initialTemplate?: GoalTemplate; 
-    onCreate: (data: GoalFormType) => void;
+  onCancel: () => void;
+  // Pasamos todos los métodos del hook useForm desde el componente padre
+  methods: UseFormReturn<GoalFormType>;
+  allCategories: any[];
+  initialTemplate?: GoalTemplate;
+  onCreate: (data: GoalFormType) => void;
 }
 
-export function CreateGoalForm({ onCancel, allCategories, initialTemplate, methods, onCreate }: CreateGoalFormProps) {
+export function CreateGoalForm({
+  onCancel,
+  allCategories,
+  initialTemplate,
+  methods,
+  onCreate,
+}: CreateGoalFormProps) {
+  const {
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { isValid, isSubmitting },
+  } = methods;
 
-  const [date, setDate] = useState(new Date())
-  const [open, setOpen] = useState(false)
+  // Estado local para manejar visualmente el toggle de tipo de meta (Diaria vs Semanal).
+  // Lo separamos del estado del formulario para tener control inmediato sobre la UI
+  // y luego sincronizamos.
+  const [uiGoalType, setUiGoalType] = useState<'DAILY' | 'WEEKLY'>(
+    initialTemplate?.targetType === 'WEEKLY' ? 'WEEKLY' : 'DAILY'
+  );
 
-    // 🚨 USAMOS LOS MÉTODOS PASADOS EN PROPS 🚨
-    const { handleSubmit, control, watch, reset, register, unregister, setValue, formState: { isValid, isSubmitting } } = methods;
+  // Efecto: Cuando cambia la plantilla seleccionada (o se limpia)
+  // reseteamos el formulario completo con los nuevos valores por defecto.
+  useEffect(() => {
+    const defaults = getFormDefaults(initialTemplate);
+    reset(defaults);
 
-    // Determinar el estado inicial de la UI (Diaria o Personalizada)
-    const isInitialCount = initialTemplate?.targetType === 'WEEKLY' || initialTemplate?.targetType === 'DAILY';
-    const initialUiType: GoalTemplate['targetType'] = isInitialCount ? 'DAILY' : 'WEEKLY';
-    const [uiGoalType, setUiGoalType] = useState<GoalTemplate['targetType']>(initialUiType);
+    const newUiType: 'DAILY' | 'WEEKLY' =
+      initialTemplate?.targetType === 'WEEKLY' ? 'WEEKLY' : 'DAILY';
 
-    // Resetea el formulario cuando la plantilla inicial cambia
-    useEffect(() => {
-        const defaults = getFormDefaults(initialTemplate);
-        reset(defaults);
-        const newUiType: GoalTemplate['targetType'] = (initialTemplate?.targetType === 'WEEKLY' || initialTemplate?.targetType === 'DAILY') ? 'WEEKLY' : 'DAILY';
-        setUiGoalType(newUiType);
+    setUiGoalType(newUiType);
+    // Forzamos la validación inmediata al setear el valor
+    setValue('targetType', newUiType, { shouldValidate: true });
+  }, [initialTemplate, reset, setValue]);
 
-    }, [initialTemplate, reset]);
+  // Efecto: Sincronización manual.
+  // Cada vez que el usuario toca el botón de tipo de meta (uiGoalType),
+  // actualizamos el valor real en React Hook Form.
+  useEffect(() => {
+    setValue('targetType', uiGoalType, { shouldValidate: true });
+  }, [uiGoalType, setValue]);
 
-    // Observamos los toggles y el valor de la UI
-    const isSubmittingOrInvalid = isSubmitting || !isValid;
-    const requiresQuantity = uiGoalType === 'WEEKLY';
+  const isDisabled = !isValid || isSubmitting;
 
-    const onSubmit = (data: GoalFormType) => {
-        // Mapeo final del targetType basado en la UI
-        const targetTypeBE: 'DAILY' | 'WEEKLY' | string = uiGoalType === 'DAILY' ? 'DAILY' : 'COUNT';
+  const onSubmit = (data: GoalFormType) => {
+    // Lógica de mapeo para el backend.
+    // El backend distingue entre 'DAILY' y 'COUNT' (para metas numéricas/semanales),
+    // mientras que en la UI lo mostramos como 'Semanal'.
+    type BackendTargetType = 'DAILY' | 'COUNT';
 
-        const finalPayload = {
-            ...data,
-            targetType: targetTypeBE, // 🚨 Sobreescribe con el valor correcto del BE
-        };
-        
-        onCreate(finalPayload as GoalFormType);
+    const targetTypeBE: BackendTargetType =
+      uiGoalType === 'DAILY' ? 'DAILY' : 'COUNT';
+
+    const finalPayload: GoalFormType = {
+      ...data,
+      targetType: targetTypeBE,
     };
 
-    return (
-        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-            <View style={styles.container}>
-                
-                <Text style={styles.headerTitle}>Meta Personalizada</Text>
-                
-                <Text style={styles.headerSubtitle}>Ej: Meditar 10 minutos</Text>
-                
-                {/* 1. CAMPOS DE TEXTO PRINCIPALES */}
-                <FormInput name="name" label="Nombre de la racha *" placeholder="Ej: Correr 5km diarios" />
-                <FormInput name="description" label="Descripción" placeholder="Describe tu meta y por qué es importante para ti..." multiline={true} numberOfLines={4} customInputStyle={styles.descriptionInput} />
+    console.log('[CreateGoalForm] Enviando payload:', finalPayload);
+    onCreate(finalPayload);
+  };
 
-                {/* 2. CATEGORÍA (FormSelect) */}
-                <Text style={styles.sectionLabel}>Categoría *</Text>
-                <FormSelect name="categoryId" label=" " placeholder="Selecciona una categoría" options={CATEGORIES} />
-                
-                {/* 3. TIPO DE META (Radio Group tipo tarjeta - USA EL ESTADO LOCAL) */}
-                <Text style={styles.sectionLabel}>Tipo de meta *</Text>
-                <View style={styles.goalTypeGroup}>
-                    {TARGET_TYPE_OPTIONS.map((option) => (
-                        <TouchableOpacity 
-                            key={option.value}
-                            style={[styles.goalTypeCard, uiGoalType === option.value ? styles.goalTypeActive : null]}
-                            onPress={() => {
-                                setUiGoalType(option.value.toString() as GoalTemplate['targetType']);
-                            }}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={[styles.goalTypeLabel, uiGoalType === option.value ? styles.goalTypeLabelActive : null]}>{option.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+  return (
+    <ScrollView
+      style={styles.scrollContainer}
+      showsVerticalScrollIndicator={false}
+      // Permite cerrar el teclado si se toca fuera de un input
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.container}>
+        <Text style={styles.headerTitle}>Meta personalizada</Text>
 
-                <View style={styles.datePickerWrapper}>
-                        <FormDate
-                            name="startDate"
-                            label="Fecha de Inicio *"
-                            placeholder="Selecciona la fecha de inicio"
-                            minimumDate={new Date()} // 🚨 Restricción: No se permite el pasado
-                        />
-                    </View>
+        {/* Sección 1: Información básica */}
+        <FormInput
+          name="name"
+          label="Nombre de la racha *"
+          placeholder="Ej: Correr 5km diarios"
+        />
 
-                <View style={styles.datePickerWrapper}>
-                    <FormDate
-                        name="endDate"
-                        label="Fecha de Fin"
-                        placeholder="Selecciona la fecha de fin"
-                        minimumDate={new Date()} // 🚨 Restricción: No se permite el pasado
-                    />
-                </View>
+        <FormInput
+          name="description"
+          label="Descripción"
+          placeholder="Describe tu meta y por qué es importante..."
+          multiline
+          numberOfLines={4}
+          customInputStyle={styles.descriptionInput}
+        />
 
-                {/* --- 6. BOTONES DE ACCIÓN --- */}
-                <View style={styles.buttonRow}>
-                    <Button onPress={onCancel} style={styles.cancelButton} textStyle={styles.cancelButtonText} variant="outline" size="lg">
-                        Cancelar
-                    </Button>
-                    <Button 
-                        onPress={handleSubmit(onSubmit)} 
-                        style={styles.createButton}
-                        textStyle={styles.createButtonText}
-                        variant="default" 
-                        size="lg"
-                        disabled={isSubmittingOrInvalid}
-                        isLoading={isSubmittingOrInvalid}
-                    >
-                        <Text style={styles.createButtonText}>Crear Meta</Text>
-                    </Button>
-                </View>
-            </View>
-        </ScrollView>
-    );
+        {/* Sección 2: Categorización */}
+        <FormSelect
+          name="categoryId"
+          label="Categoría *"
+          placeholder="Selecciona una categoría"
+          options={CATEGORIES}
+        />
+
+        {/* Sección 3: Selector de frecuencia (Toggle tipo tarjeta) */}
+        <Text style={styles.sectionLabel}>Tipo de meta *</Text>
+        <View style={styles.goalTypeGroup}>
+          {TARGET_TYPE_OPTIONS.map((option) => {
+            const isActive = uiGoalType === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.goalTypeCard,
+                  isActive && styles.goalTypeActive,
+                ]}
+                onPress={() =>
+                  setUiGoalType(option.value as 'DAILY' | 'WEEKLY')
+                }
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.goalTypeLabel,
+                    isActive && styles.goalTypeLabelActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Sección 4: Definición de fechas */}
+        <View style={styles.dateGroup}>
+          <View style={styles.datePickerWrapper}>
+            <FormDate
+              name="startDate"
+              label="Fecha de inicio *"
+              placeholder="Selecciona la fecha de inicio"
+              minimumDate={new Date()}
+            />
+          </View>
+
+          <View style={styles.datePickerWrapper}>
+            <FormDate
+              name="endDate"
+              label="Fecha de fin *"
+              placeholder="Selecciona la fecha de fin"
+              minimumDate={new Date()}
+            />
+          </View>
+        </View>
+
+        {/* Sección 5: Acciones del formulario */}
+        <View style={styles.buttonRow}>
+          <Button
+            onPress={onCancel}
+            variant="ghost"
+            style={styles.cancelButton}
+            size="lg"
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            style={styles.createButton}
+            size="lg"
+            disabled={isDisabled}
+            isLoading={isSubmitting}
+          >
+            Crear meta
+          </Button>
+        </View>
+      </View>
+    </ScrollView>
+  );
 }
 
-// -------------------------------------------------------------
-// 🚨 ESTILOS LOCALES 🚨 (Omitidos por brevedad, asume que están al final)
-// -------------------------------------------------------------
+// ---------------- ESTILOS ----------------
+
 const styles = StyleSheet.create({
-    scrollContainer: { flex: 1, backgroundColor: COLORS.WHITE },
-    container: { padding: 20, paddingBottom: 40, },
-    headerTitle: { fontSize: 24, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY, textAlign: 'center', marginBottom: 4, },
-    headerSubtitle: { fontSize: 16, color: COLORS.TEXT_MUTED, textAlign: 'center', marginBottom: 30, },
-    descriptionInput: { minHeight: 100, textAlignVertical: 'top', paddingVertical: 10, },
-    sectionLabel: { fontSize: 14, color: COLORS.TEXT_PRIMARY, marginTop: 20, marginBottom: 10, fontWeight: 'bold', },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: COLORS.BACKGROUND_DEFAULT,
+  },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  descriptionInput: {
+    minHeight: 100,
+    textAlignVertical: 'top', // Alinea el texto arriba en Android
+    paddingVertical: 10,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
 
-    dateGroup: {
-        flexDirection: 'row', 
-        gap: 15, 
-        marginTop: 10,
-        marginBottom: 15,
-    },
-    datePickerWrapper: {
-        flex: 1, // Para que ocupen la mitad del espacio cada uno
-    },
-    
-    // --- Tipo de Meta (Botones de Tarjeta) ---
-    goalTypeGroup: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 20, },
-    goalTypeCard: { flex: 1, padding: 15, borderRadius: 12, backgroundColor: COLORS.BUTTON_SECONDARY_BG, borderWidth: 1, borderColor: COLORS.GRAY_BORDER, minHeight: 80, justifyContent: 'center', },
-    goalTypeActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary, borderWidth: 2, },
-    goalTypeLabel: { fontSize: 16, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY, marginBottom: 4, },
-    goalTypeSubtitle: { fontSize: 12, color: COLORS.TEXT_MUTED, },
-    goalTypeLabelActive: { color: COLORS.WHITE, },
-    
-    // --- Cantidad/Unidad ---
-    quantityUnitRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 10, alignItems: 'flex-start', },
-    quantityWrapper: { flex: 1, },
-    unitSelectWrapper: { flex: 1, },
-    
-    // --- Toggles y Hora ---
-    toggleSection: { backgroundColor: COLORS.BUTTON_SECONDARY_BG, borderRadius: 12, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: COLORS.GRAY_BORDER, },
-    reminderTimeContainer: { marginTop: 15, paddingTop: 15, borderTopWidth: 1, borderColor: COLORS.GRAY_BORDER, },
+  // Agrupación de fechas en fila
+  dateGroup: {
+    flexDirection: 'row',
+    gap: 15,
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  datePickerWrapper: {
+    flex: 1,
+  },
 
-    // --- Botones de Acción (Footer) ---
-    buttonRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30, gap: 10, },
-    cancelButton: { flex: 1, backgroundColor: COLORS.GRAY_ACCENT, paddingVertical: 14, borderRadius: 8, borderWidth: 1, borderColor: COLORS.GRAY_BORDER, },
-    cancelButtonText: { color: COLORS.TEXT_PRIMARY, fontWeight: '600', textAlign: 'center', },
-    createButton: { flex: 1, backgroundColor: COLORS.primary, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, },
-    createButtonText: { color: COLORS.WHITE, fontWeight: 'bold', textAlign: 'center', },
+  // Estilos para el selector tipo tarjeta
+  goalTypeGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 20,
+  },
+  goalTypeCard: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 12,
+    backgroundColor: COLORS.BUTTON_SECONDARY_BG,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER_COLOR,
+    minHeight: 20,
+    justifyContent: 'center',
+  },
+  goalTypeActive: {
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.PRIMARY,
+    borderWidth: 2,
+  },
+  goalTypeLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    textAlign: 'center',
+  },
+  goalTypeLabelActive: {
+    color: COLORS.BACKGROUND_DEFAULT,
+  },
+
+  // Botones inferiores
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+    gap: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.BUTTON_SECONDARY_BG,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER_COLOR,
+  },
+  createButton: {
+    flex: 1,
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
 });
+
+export default CreateGoalForm;

@@ -2,23 +2,43 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TextInputProps, TouchableOpacity, ViewStyle } from 'react-native';
 import { useController, useFormContext, FieldError } from 'react-hook-form';
 import { Eye, EyeOff } from 'lucide-react-native';
+import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
 interface FormInputProps extends TextInputProps {
     name: string;
     label: string;
     isPassword?: boolean;
     isInvalid?: boolean;
+    // Elemento opcional para renderizar a la derecha (ej: un icono de búsqueda o unidad de medida)
     rightIcon?: React.ReactNode;
     
-    // 🚨 NUEVA PROP PARA TEXTAREA 🚨
+    // Props específicas para controlar el comportamiento de área de texto (textarea)
     multiline?: boolean;
     numberOfLines?: number;
-    customInputStyle?: ViewStyle | ViewStyle[]; // Para estilos específicos de textarea
+    // Permite sobrescribir estilos desde el padre, útil para alturas personalizadas
+    customInputStyle?: ViewStyle | ViewStyle[]; 
 }
 
-export function FormInput({ name, label, isPassword = false, isInvalid, rightIcon, multiline = false, numberOfLines = 1, customInputStyle, ...props }: FormInputProps) {
+// Componente wrapper reutilizable que conecta un TextInput nativo con React Hook Form.
+// Soporta modos de contraseña, validación de errores y estilos multilínea.
+export function FormInput({ 
+    name, 
+    label, 
+    isPassword = false, 
+    isInvalid, 
+    rightIcon, 
+    multiline = false, 
+    numberOfLines = 1, 
+    customInputStyle, 
+    ...props 
+}: FormInputProps) {
+    // Usamos useFormContext para acceder al estado del formulario sin pasar props manualmente
     const { control, formState: { errors } } = useFormContext();
+    
+    // useController nos da control granular sobre el input (value, onBlur, onChange)
     const { field } = useController({ name, control });
+    
+    // Estado local para alternar la visibilidad de la contraseña
     const [secureTextEntry, setSecureTextEntry] = useState(isPassword);
     
     const hasError = errors[name] || isInvalid; 
@@ -28,18 +48,20 @@ export function FormInput({ name, label, isPassword = false, isInvalid, rightIco
         setSecureTextEntry(!secureTextEntry);
     };
 
-    // 🚨 Lógica para ajustar el estilo del Input 🚨
+    // Composición de estilos:
+    // 1. Estilo base.
+    // 2. Estilo de error (borde rojo) si falla la validación.
+    // 3. Estilo multilínea (altura dinámica) si es textarea.
+    // 4. Estilos personalizados inyectados por props.
     const inputStyleArray = [
         inputStyles.input, 
         hasError ? inputStyles.inputError : null,
-        // 🛠️ Si es multiline, aplica el estilo específico para alineación 🛠️
         multiline ? inputStyles.multilineInput : null, 
-        customInputStyle // Para permitir sobrescribir la altura
+        customInputStyle 
     ];
 
     return (
         <View style={inputStyles.container}>
-            {/* Label */}
             <Text style={inputStyles.label}>{label}</Text>
             
             <View style={inputStyles.inputWrapper}>
@@ -48,28 +70,32 @@ export function FormInput({ name, label, isPassword = false, isInvalid, rightIco
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
                     
-                    // 🚨 PROPS DE TEXTAREA 🚨
                     multiline={multiline}
                     numberOfLines={multiline ? numberOfLines : undefined}
-                    textAlignVertical={multiline ? 'top' : 'center'} // CRÍTICO para Android
+                    
+                    // Importante: textAlignVertical 'top' es necesario en Android para que el texto
+                    // empiece en la esquina superior izquierda en inputs de varias líneas,
+                    // de lo contrario empieza centrado verticalmente.
+                    textAlignVertical={multiline ? 'top' : 'center'}
                     
                     style={inputStyleArray}
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={COLORS.TEXT_MUTED}
                     secureTextEntry={secureTextEntry}
                     {...props}
                 />
                 
+                {/* Botón para alternar visibilidad de contraseña */}
                 {isPassword && (
                     <TouchableOpacity onPress={toggleSecureEntry} style={inputStyles.passwordToggle}>
                         {secureTextEntry ? (
-                            <EyeOff size={20} color={COLORS.textMuted} />
+                            <EyeOff size={20} color={COLORS.TEXT_MUTED} />
                         ) : (
-                            <Eye size={20} color={COLORS.textMuted} />
+                            <Eye size={20} color={COLORS.TEXT_MUTED} />
                         )}
                     </TouchableOpacity>
                 )}
                 
-                {/* 🛠️ Soporte para el ícono derecho general (si no es contraseña) 🛠️ */}
+                {/* Icono derecho genérico (solo se muestra si no es un campo de contraseña) */}
                 {!isPassword && rightIcon && (
                     <View style={inputStyles.rightIconContainer}>
                         {rightIcon}
@@ -77,54 +103,57 @@ export function FormInput({ name, label, isPassword = false, isInvalid, rightIco
                 )}
             </View>
 
+            {/* Mensaje de error al pie del input */}
             {error?.message && <Text style={inputStyles.errorText}>{error.message}</Text>}
         </View>
     );
 }
 
 // -------------------------------------------------------------
-// ESTILOS Y COLORES (Ajustados para el nuevo Input)
+// ESTILOS Y COLORES
 // -------------------------------------------------------------
-
-const COLORS = {
-    // ... Colores deben ser importados de Colors.ts en una aplicación real
-    inputBorder: '#e5e7eb', 
-    inputBackground: '#f9fafb', 
-    textPrimary: '#000000',
-    textMuted: '#717182',
-    errorText: '#d4183d',
-    errorBorder: '#d4183d',
-};
 
 const inputStyles = StyleSheet.create({
     container: { marginBottom: 16 },
-    label: { fontSize: 14, color: COLORS.textPrimary, marginBottom: 8, fontWeight: '500' },
+    label: { 
+        fontSize: 14, 
+        color: COLORS.TEXT_PRIMARY, 
+        marginBottom: 8, 
+        fontWeight: '500' 
+    },
     inputWrapper: { 
         flexDirection: 'row', 
-        alignItems: 'flex-start', // Alineamos al inicio para el textarea
+        // 'flex-start' es necesario para que, en multilínea, los iconos se queden arriba
+        // y no se centren respecto a la altura total del input.
+        alignItems: 'flex-start', 
         position: 'relative' 
     },
     input: {
         flex: 1, 
-        height: 48, // Altura estándar
+        height: 48, // Altura estándar para inputs de una línea
         borderWidth: 1, 
-        borderColor: COLORS.inputBorder,
-        backgroundColor: COLORS.inputBackground,
+        borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND,
         borderRadius: 8, 
         paddingHorizontal: 12,
-        paddingVertical: 12, // Ajustar el padding vertical para centrar el texto
+        // Padding vertical necesario para centrar visualmente el texto en algunos dispositivos
+        paddingVertical: 12, 
         fontSize: 16, 
-        color: COLORS.textPrimary,
+        color: COLORS.TEXT_PRIMARY,
     },
-    // 🚨 NUEVO ESTILO PARA TEXTAREA 🚨
+    // Estilos específicos para modo Textarea
     multilineInput: {
-        minHeight: 100, // Altura mínima para el área de texto
-        height: 'auto', 
-        paddingTop: 12, // Asegura el padding en la parte superior
+        minHeight: 100, 
+        height: 'auto', // Permite crecer si fuera necesario (aunque limitado por numberOfLines visualmente)
+        paddingTop: 12, 
+        paddingBottom: 12,
+        backgroundColor: COLORS.INPUT_BACKGROUND,
+        color: COLORS.TEXT_PRIMARY,
     },
-    inputError: { borderColor: COLORS.errorBorder },
-    errorText: { color: COLORS.errorText, fontSize: 12, marginTop: 4 },
-    // Ajuste de posición para el ícono de contraseña
+    inputError: { borderColor: COLORS.ERROR_TEXT },
+    errorText: { color: COLORS.ERROR_TEXT, fontSize: 12, marginTop: 4 },
+    
+    // Posicionamiento absoluto para iconos dentro del input
     passwordToggle: { 
         position: 'absolute', 
         right: 12, 
@@ -134,7 +163,6 @@ const inputStyles = StyleSheet.create({
         justifyContent: 'center',
         padding: 5,
     },
-    // Estilo para íconos derechos generales (que no son de contraseña)
     rightIconContainer: {
         position: 'absolute', 
         right: 12, 

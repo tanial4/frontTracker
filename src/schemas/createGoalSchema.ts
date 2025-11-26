@@ -1,45 +1,55 @@
 import { z } from 'zod';
 
-// Definimos la fecha actual al inicio para usarla como mínimo en la validación
-const today = new Date();
-today.setHours(0, 0, 0, 0); // Establecemos la hora a medianoche para solo comparar el día
+// Normaliza fecha a medianoche para comparar solo por día
+const normalizeDate = (d: Date) => {
+  const copy = new Date(d);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
 
-export const GoalSchema = z.object({
-  // Campos obligatorios
-  name: z.string().min(3, "El nombre de la meta es obligatorio."),
-  categoryId: z.string().min(1, "Selecciona una categoría."),
+const today = normalizeDate(new Date());
 
-  description: z.string().optional(),
-  
-  // 🚨 1. VALIDACIÓN DE FECHA DE INICIO 🚨
-  startDate: z.date({
-    required_error: "La fecha de inicio es obligatoria",
-    invalid_type_error: "Formato de fecha inválido",
+export const GoalSchema = z
+  .object({
+    // Campos obligatorios
+    name: z.string().min(3, 'El nombre de la meta es obligatorio.'),
+    categoryId: z.string().min(1, 'Selecciona una categoría.'),
+
+    description: z.string().optional(),
+
+    startDate: z.date({
+      required_error: 'La fecha de inicio es obligatoria',
+      invalid_type_error: 'Formato de fecha inválido',
+    }),
+
+    endDate: z.date({
+      required_error: 'La fecha de fin es obligatoria',
+      invalid_type_error: 'Formato de fecha inválido',
+    }),
+
+    targetType: z.string(),
   })
-    // Debe ser igual o mayor a la fecha actual (hoy)
-    .min(today, { message: "La fecha de inicio no puede ser en el pasado." }),
-  
-  // 2. FECHA DE FIN (Opcional y con validación condicional)
-  endDate: z.date({
-    invalid_type_error: "Formato de fecha inválido",
+
+  // ✅ startDate >= hoy
+  .refine((data) => normalizeDate(data.startDate) >= today, {
+    message: 'La fecha de inicio no puede ser en el pasado.',
+    path: ['startDate'],
   })
-    .nullable()
-    .optional(),
-  
-  targetType: z.string(),
-})
-// 🚨 3. VALIDACIÓN CONDICIONAL: Fecha de fin > Fecha de inicio 🚨
-.refine((data) => {
-    // Solo si el usuario ha seleccionado una fecha de fin
-    if (data.endDate) {
-        // La fecha de fin debe ser estrictamente posterior (>).
-        // Si son el mismo día, permite el error.
-        return data.endDate > data.startDate;
+
+  // ✅ endDate >= hoy
+  .refine((data) => normalizeDate(data.endDate) >= today, {
+    message: 'La fecha de finalización no puede ser en el pasado.',
+    path: ['endDate'],
+  })
+
+  // ✅ endDate > startDate
+  .refine(
+    (data) =>
+      normalizeDate(data.endDate) > normalizeDate(data.startDate),
+    {
+      message: 'La fecha de fin debe ser posterior a la fecha de inicio.',
+      path: ['endDate'],
     }
-    return true;
-}, {
-    message: "La fecha de fin debe ser posterior a la fecha de inicio.",
-    path: ["endDate"], // Muestra el error junto al campo endDate
-});
+  );
 
 export type GoalFormType = z.infer<typeof GoalSchema>;

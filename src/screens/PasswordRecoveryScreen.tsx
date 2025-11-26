@@ -53,7 +53,7 @@ export function PasswordRecoveryScreen({ onGoBack, onRecoveryLinkSent }: Passwor
 
                     <View style={globalLayout.headerContainer}>
                         <View style={globalLayout.logoWrapper}>
-                            <Flame size={32} color={BRAND_COLORS.WHITE} /> 
+                            <Flame size={32} color={BRAND_COLORS.PRIMARY} /> 
                         </View>
                         <Text style={globalLayout.title}>¿Olvidaste tu contraseña?</Text>
                         <Text style={globalLayout.subtitle}>No te preocupes, te enviaremos instrucciones para recuperarla</Text>
@@ -88,7 +88,7 @@ export function PasswordRecoveryScreen({ onGoBack, onRecoveryLinkSent }: Passwor
 
                     <View style={formComponentStyles.helpCard}>
                         <View style={formComponentStyles.helpIconTextWrapper}>
-                            <Mail size={24} color={BRAND_COLORS.primary} />
+                            <Mail size={24} color={BRAND_COLORS.PRIMARY} />
                             <View style={formComponentStyles.helpTextWrapper}>
                                 <Text style={formComponentStyles.helpTitle}>¿No recibes el email?</Text>
                                 <Text style={formComponentStyles.helpSubtitle}>Revisa tu carpeta de spam o correo no deseado</Text>
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     
     
     submitButton: {
-        backgroundColor: BRAND_COLORS.primary, 
+        backgroundColor: BRAND_COLORS.PRIMARY, 
         paddingVertical: 12,
         borderRadius: 8,
         alignItems: 'center',

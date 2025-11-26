@@ -47,7 +47,7 @@ export function SignupScreen({ onSignup, onSwitchToLogin }: SignupScreenProps) {
                     
                     <View style={styles.headerContainer}>
                         <View style={styles.logoWrapper}>
-                            <Flame size={32} color={COLORS.LOGO_FLAME} />
+                            <Flame size={32} color={COLORS.PRIMARY} />
                         </View>
                         <Text style={styles.title}>Crear cuenta</Text>
                         <Text style={styles.subtitle}>Únete y comienza tus rachas con amigos</Text>
@@ -101,11 +101,11 @@ const styles = StyleSheet.create({
     },
     loginLink: {
         fontWeight: 'bold',
-        color: COLORS.primary, // Color de acento púrpura
+        color: COLORS.PRIMARY, // Color de acento púrpura
         fontSize: 14,
     },
     // --- Layout Base ---
-    safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND },
+    safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND_DEFAULT },
     keyboardAvoidingView: { flex: 1 },
     scrollViewContent: {
         flexGrow: 1, 
@@ -119,18 +119,18 @@ const styles = StyleSheet.create({
     headerContainer: { alignItems: 'center', marginBottom: 30 },
     logoWrapper: {
         width: 60, height: 60, borderRadius: 15,
-        backgroundColor: COLORS.primary, 
+        backgroundColor: COLORS.PRIMARY, 
         alignItems: 'center', justifyContent: 'center',
         marginBottom: 12,
     },
     title: { fontSize: 20, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY, marginBottom: 3 },
-    subtitle: { color: COLORS.TEXT_SECONDARY, fontSize: 14, textAlign: 'center' },
+    subtitle: { color: COLORS.TEXT_MUTED, fontSize: 14, textAlign: 'center' },
 
     // --- Formulario (Tarjeta) ---
     formCard: {
         width: '100%', maxWidth: 380,
-        borderWidth: 1, borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.BACKGROUND,
+        borderWidth: 1, borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND,
         borderRadius: 12, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1, shadowRadius: 3, elevation: 3,
@@ -153,22 +153,22 @@ const styles = StyleSheet.create({
     // --- Footer ---
     signupContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, marginTop: 32 },
     signupText: { fontSize: 14, color: COLORS.TEXT_MUTED },
-    signupLink: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14 },
+    signupLink: { fontWeight: 'bold', color: COLORS.PRIMARY, fontSize: 14 },
 
     // --- Demo Rápido ---
     demoCard: {
         marginTop: 30, width: '100%', maxWidth: 380,
         borderRadius: 12, borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.INPUT_BG, 
+        borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND, 
         padding: 16,
         shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
     },
     demoTitle: { color: COLORS.TEXT_PRIMARY, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
     demoButton: {
-        backgroundColor: COLORS.BACKGROUND, // Botón secundario blanco
-        borderColor: COLORS.GRAY_BORDER,
+        backgroundColor: COLORS.BACKGROUND_DEFAULT, // Botón secundario blanco
+        borderColor: COLORS.BORDER_COLOR,
         borderWidth: 1,
         paddingVertical: 10,
         borderRadius: 8,

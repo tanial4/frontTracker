@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Controller, useFormContext, FieldError } from 'react-hook-form';
-import DatePicker from 'react-native-date-picker'; // 🚨 Librería moderna
+import DatePicker from 'react-native-date-picker';
 import { Calendar } from 'lucide-react-native';
 
-// 🚨 Importa tus constantes de color y estilos 🚨
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { formComponentStyles } from '../../styles/GlobalStyles'; 
 
-// Función auxiliar para formatear la fecha a un string legible
+// Helper para dar formato legible a la fecha en la interfaz (ej: "18 nov. 2025").
+// Se usa la configuración local de México.
 const formatDate = (date: Date): string => {
-    // Retorna una cadena de fecha localizada (Ej: "Nov. 18, 2025")
     return date.toLocaleDateString('es-MX', {
         year: 'numeric',
         month: 'short',
@@ -22,42 +21,44 @@ interface FormDateProps {
     name: string;
     label: string;
     placeholder: string;
-    // La prop minimumDate es un objeto Date opcional
+    // Fecha mínima seleccionable (útil para evitar fechas pasadas en metas nuevas)
     minimumDate?: Date; 
 }
 
+// Componente wrapper para integrar el DatePicker nativo con React Hook Form.
+// Funciona simulando un input de texto que al presionarse abre el modal de fecha.
 export function FormDate({ name, label, placeholder, minimumDate }: FormDateProps) {
+    // Usamos useFormContext para acceder al control sin pasar props manualmente desde el padre
     const { control, formState: { errors } } = useFormContext();
     const error = errors[name] as FieldError | undefined;
     const hasError = !!error;
 
-    // Estado local para controlar la visibilidad del modal del DatePicker
+    // Controla la visibilidad del modal nativo
     const [open, setOpen] = useState(false);
 
     return (
         <View style={styles.container}>
-            {/* Label */}
             <Text style={styles.label}>{label}</Text>
 
             <Controller
                 control={control}
                 name={name}
-                // Si el valor inicial es null/undefined, RHF lo pasa como tal.
                 render={({ field: { onChange, value } }) => {
                     
-                    // 🚨 FIX: Garantizamos que selectedDate sea un objeto Date válido para el Picker 🚨
-                    // Si value es Date, úsala; si no, usa una nueva fecha para evitar el crash.
+                    // Lógica de seguridad: La librería DatePicker falla si la propiedad 'date' es null o undefined.
+                    // Si el valor del formulario está vacío, usamos la fecha actual (new Date) 
+                    // solo para inicializar visualmente el picker donde debe empezar.
                     const selectedDate = value instanceof Date ? value : new Date();
                     
-                    // Solo mostramos el valor formateado si value existe y es una Date
+                    // Decidimos qué texto mostrar: la fecha formateada o el placeholder
                     const displayValue = value instanceof Date ? formatDate(value) : placeholder;
 
                     return (
                         <>
-                            {/* 1. Input Simulado (TouchableOpacity) */}
+                            {/* Input visual (TouchableOpacity) */}
                             <TouchableOpacity
                                 style={[styles.inputWrapper, hasError ? styles.inputError : null]}
-                                onPress={() => setOpen(true)} // Abre el Modal
+                                onPress={() => setOpen(true)}
                                 activeOpacity={0.7}
                             >
                                 <Calendar size={20} color={COLORS.TEXT_MUTED} style={styles.icon} />
@@ -66,22 +67,21 @@ export function FormDate({ name, label, placeholder, minimumDate }: FormDateProp
                                 </Text>
                             </TouchableOpacity>
 
-                            {/* 2. DatePicker Modal */}
+                            {/* Componente Modal (Invisible hasta que open es true) */}
                             <DatePicker
                                 modal
                                 open={open}
-                                date={selectedDate} // 🚨 Usamos la variable garantizada 🚨
+                                date={selectedDate}
                                 mode="date"
                                 minimumDate={minimumDate}
                                 
-                                // Evento al seleccionar la fecha (Guardar y Cerrar)
+                                // Solo actualizamos el estado del formulario cuando el usuario confirma explícitamente.
                                 onConfirm={(date) => {
                                     setOpen(false);
-                                    onChange(date); // 🚨 Pasa el objeto Date a RHF
+                                    onChange(date);
                                     console.log("Fecha seleccionada:", date);
                                 }}
                                 
-                                // Evento al Cancelar (Cerrar el Modal)
                                 onCancel={() => {
                                     setOpen(false);
                                 }}
@@ -91,7 +91,6 @@ export function FormDate({ name, label, placeholder, minimumDate }: FormDateProp
                 }}
             />
 
-            {/* Mensaje de Error */}
             {hasError && <Text style={styles.errorText}>{error?.message}</Text>}
         </View>
     );
@@ -105,9 +104,14 @@ const styles = StyleSheet.create({
     container: { marginBottom: 16 },
     label: { ...formComponentStyles.label, marginBottom: 8 },
     inputWrapper: {
-        flexDirection: 'row', alignItems: 'center', height: 48, borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER, backgroundColor: COLORS.INPUT_BG,
-        borderRadius: 8, paddingHorizontal: 12,
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        height: 48, 
+        borderWidth: 1,
+        borderColor: COLORS.BORDER_COLOR, 
+        backgroundColor: COLORS.INPUT_BACKGROUND,
+        borderRadius: 8, 
+        paddingHorizontal: 12,
     },
     inputError: { borderColor: COLORS.ERROR_TEXT },
     icon: { marginRight: 10 },

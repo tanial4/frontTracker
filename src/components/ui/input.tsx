@@ -16,12 +16,13 @@ export function Input({ className, ...props }: InputProps) {
   return (
     <TextInput
       // Aplicamos las clases base y cualquier clase personalizada pasada por el padre
+      // @ts-ignore: nativewind 'className' prop (transformada por babel plugin)
       className={cn(
         inputBaseClasses,
         // Clases de enfoque (focus): Opcionalmente, puedes agregar estilos de enfoque
         // que usarán tu color primario al activar el campo (si lo deseas):
-        "focus:border-primary", 
-        className 
+        "focus:border-primary",
+        className
       )}
       // Usamos el color de texto del tema 'muted-foreground' para el placeholder
       placeholderTextColor="var(--muted-foreground)" 

@@ -39,20 +39,20 @@ const SIZE_MAP: SizeStylesMap = {
 const VARIANT_MAP: VariantStylesMap = {
     default: { backgroundColor: COLORS.BUTTON_PRIMARY_BG },
     destructive: { backgroundColor: COLORS.ERROR_TEXT },
-    outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: COLORS.GRAY_BORDER },
+    outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: COLORS.BORDER_COLOR },
     secondary: { backgroundColor: COLORS.BUTTON_SECONDARY_BG },
-    ghost: { backgroundColor: 'transparent' },
+    ghost: { backgroundColor:  COLORS.INPUT_BACKGROUND},
     link: { backgroundColor: 'transparent', paddingVertical: 5 },
 };
 
 // Mapeo del TEXTO
 const TEXT_VARIANT_MAP: TextVariantStylesMap = {
     default: { color: COLORS.BUTTON_PRIMARY_TEXT },
-    destructive: { color: COLORS.WHITE },
+    destructive: { color: COLORS.BACKGROUND_DEFAULT },
     outline: { color: COLORS.TEXT_PRIMARY },
     secondary: { color: COLORS.TEXT_PRIMARY },
-    ghost: { color: COLORS.primary },
-    link: { color: COLORS.primary, textDecorationLine: 'underline', fontWeight: '500' },
+    ghost: { color: COLORS.PRIMARY },
+    link: { color: COLORS.PRIMARY, textDecorationLine: 'underline', fontWeight: '500' },
 };
 
 
@@ -88,7 +88,7 @@ export function Button({
       activeOpacity={0.7}
     >
       {isLoading ? (
-        <ActivityIndicator color={textVariantStyles.color || COLORS.WHITE} />
+        <ActivityIndicator color={textVariantStyles.color || COLORS.BACKGROUND_DEFAULT} />
       ) : (
         <Text style={[styles.textBase, textVariantStyles, textStyle]}>
           {children}
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 48,
+        minHeight: 40,
     },
     textBase: {
-        fontSize: 15,
+        fontSize: 12,
         fontWeight: 'bold',
         textAlign: 'center',
     },

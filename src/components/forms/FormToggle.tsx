@@ -2,8 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Controller, useFormContext, FieldError } from 'react-hook-form';
 
-// 🚨 Importa tus constantes de color y estilos 🚨
-// NOTA: Asegúrate de que COLORS y formComponentStyles estén bien importados
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { formComponentStyles } from '../../styles/GlobalStyles'; 
 
@@ -11,16 +9,22 @@ interface FormToggleProps {
     name: string;
     label: string;
     subtitle: string;
-    leftIcon?: React.ReactNode; // 🚨 NUEVA PROP: Un nodo React para el ícono
+    // Elemento gráfico opcional a la izquierda (ej: campana de notificaciones o icono de privacidad)
+    leftIcon?: React.ReactNode; 
 }
 
+// Componente tipo "Interruptor" (Switch) conectado a React Hook Form.
+// Se presenta dentro de una tarjeta con borde, ideal para configuraciones o preferencias.
 export function FormToggle({ name, label, subtitle, leftIcon }: FormToggleProps) {
+    // Accedemos al contexto del formulario
     const { control, formState: { errors } } = useFormContext();
     const error = errors[name] as FieldError | undefined; 
     
+    // Configuración de colores para los estados inactivo (false) y activo (true).
+    // Se usan fallbacks hexadecimales por seguridad si las constantes de color fallan.
     const trackColor = { 
-        false: COLORS.GRAY_ACCENT || '#E5E5E5',
-        true: COLORS.primary || '#7c3aed'
+        false: COLORS.ACCENT || '#E5E5E5',
+        true: COLORS.PRIMARY || '#7c3aed'
     };
 
     return (
@@ -31,58 +35,58 @@ export function FormToggle({ name, label, subtitle, leftIcon }: FormToggleProps)
                 render={({ field: { onChange, value } }) => (
                     <View style={styles.toggleRow}>
                         
-                        {/* 🚨 Ícono a la izquierda (condicional) 🚨 */}
+                        {/* Renderizado condicional del icono. Si no se pasa la prop, no ocupa espacio. */}
                         {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
 
-                        {/* Texto Descriptivo */}
+                        {/* Contenedor de texto flexible */}
                         <View style={styles.textWrapper}>
                             <Text style={styles.toggleLabel}>{label}</Text>
                             <Text style={styles.toggleSubtitle}>{subtitle}</Text>
                         </View>
                         
-                        {/* Control del Switch */}
+                        {/* Switch nativo */}
                         <Switch
                             onValueChange={onChange}
                             value={value}
                             trackColor={trackColor}
-                            thumbColor={COLORS.WHITE} 
+                            // El color del "pulgar" (círculo) se mantiene consistente con el fondo
+                            thumbColor={COLORS.BACKGROUND_DEFAULT} 
                         />
                     </View>
                 )}
             />
             
+            {/* Mensaje de error (aunque es raro en toggles, puede ocurrir si hay validación custom) */}
             {error?.message && <Text style={styles.errorText}>{error.message}</Text>}
         </View>
     );
 }
 
 // -------------------------------------------------------------
-// ESTILOS ESPECÍFICOS DEL TOGGLE (Ajustados para el ícono)
+// ESTILOS
 // -------------------------------------------------------------
 
 const styles = StyleSheet.create({
     toggleSection: {
-        backgroundColor: COLORS.WHITE,
+        backgroundColor: COLORS.BACKGROUND_DEFAULT,
         borderRadius: 12,
         paddingVertical: 15,
-        paddingHorizontal: 15, // Mantén un padding para el contenido
+        paddingHorizontal: 15,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER,
+        borderColor: COLORS.BORDER_COLOR,
     },
     toggleRow: {
         flexDirection: 'row',
-        alignItems: 'center', // Asegura que todo esté alineado verticalmente
+        alignItems: 'center', // Centrado vertical de icono, texto y switch
         justifyContent: 'space-between',
     },
-    // 🚨 NUEVO CONTENEDOR PARA EL ÍCONO IZQUIERDO 🚨
     leftIconContainer: {
-        marginRight: 15, // Espacio entre el ícono y el texto
-        // Puedes añadir un padding o tamaño fijo si los iconos varían
+        marginRight: 15, // Separación consistente con el texto
     },
     textWrapper: {
-        flex: 1, // Permite que el texto ocupe el espacio disponible
-        marginRight: 10, // Espacio entre el texto y el switch
+        flex: 1, // Permite que el texto ocupe todo el espacio disponible entre el icono y el switch
+        marginRight: 10,
     },
     toggleLabel: {
         fontSize: 16,

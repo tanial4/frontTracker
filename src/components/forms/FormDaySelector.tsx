@@ -2,13 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Controller, useFormContext, FieldError } from 'react-hook-form';
 
-// 🚨 Importa tus constantes de color y estilos 🚨
-// NOTA: Asume que COLORS está disponible en este scope
-// import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { formComponentStyles } from '../../styles/GlobalStyles';
 
-// --- Datos Fijos de la Semana ---
+// Configuración estática de los días para iterar en la vista.
+// Se define fuera del componente para evitar recrearlo en cada render.
 const DAYS_OF_WEEK = [
     { label: 'L', value: 'L' },
     { label: 'M', value: 'M' },
@@ -24,38 +22,43 @@ interface FormDaySelectorProps {
     label: string;
 }
 
+// Componente para selección múltiple de días (ej: Lunes, Miércoles, Viernes).
+// Funciona manipulando un array de strings dentro del formulario.
 export function FormDaySelector({ name, label }: FormDaySelectorProps) {
+    // Accedemos al contexto del formulario para no tener que pasar control/errors por props
     const { control, formState: { errors } } = useFormContext();
     const error = errors[name] as FieldError | undefined;
 
     return (
         <View style={styles.container}>
             
-            {/* 1. Label de la Sección */}
             <Text style={styles.sectionLabel}>{label}</Text>
             
             <Controller
                 control={control}
                 name={name}
-                // Asegura que el valor inicial sea un array vacío si no está definido
+                // Importante: Inicializamos con array vacío para evitar errores de null/undefined al usar .includes()
                 defaultValue={[]} 
                 render={({ field: { onChange, value } }) => {
+                    // Garantizamos que siempre trabajamos con un array
                     const selectedDays: string[] = Array.isArray(value) ? value : [];
 
+                    // Lógica para alternar la selección de un día
                     const toggleDay = (dayValue: string) => {
                         const isCurrentlySelected = selectedDays.includes(dayValue);
                         
-                        // Lógica para agregar o eliminar el día del array
+                        // Si ya está seleccionado, lo filtramos (quitamos).
+                        // Si no, desestructuramos el array actual y agregamos el nuevo valor.
                         const newDays = isCurrentlySelected
                             ? selectedDays.filter((d) => d !== dayValue)
                             : [...selectedDays, dayValue];
                             
-                        onChange(newDays); // Actualiza el valor en react-hook-form
+                        onChange(newDays);
                     };
 
                     return (
                         <>
-                            {/* 2. Botones de Selección */}
+                            {/* Renderizado de los botones circulares/cuadrados */}
                             <View style={styles.daySelectorRow}>
                                 {DAYS_OF_WEEK.map((day) => {
                                     const isSelected = selectedDays.includes(day.value);
@@ -65,7 +68,8 @@ export function FormDaySelector({ name, label }: FormDaySelectorProps) {
                                             style={[
                                                 styles.dayButton,
                                                 isSelected ? styles.dayButtonActive : null,
-                                                error && styles.dayButtonError // Borde rojo en caso de error
+                                                // Feedback visual: borde rojo si hay error de validación (ej: campo requerido)
+                                                error && styles.dayButtonError 
                                             ]}
                                             onPress={() => toggleDay(day.value)}
                                             activeOpacity={0.7}
@@ -79,18 +83,18 @@ export function FormDaySelector({ name, label }: FormDaySelectorProps) {
                                         </TouchableOpacity>
                                     );
                                 })}
-                                </View>
-                                
-                                {/* 3. Contador de Días Seleccionados */}
-                                <Text style={styles.selectedDaysCount}>
-                                    {selectedDays.length} días seleccionado{selectedDays.length !== 1 ? 's' : ''}
-                                </Text>
-                            </>
-                        );
-                    }}
-                />
+                            </View>
+                            
+                            {/* Feedback textual al usuario sobre cuántos días ha marcado */}
+                            <Text style={styles.selectedDaysCount}>
+                                {selectedDays.length} días seleccionado{selectedDays.length !== 1 ? 's' : ''}
+                            </Text>
+                        </>
+                    );
+                }}
+            />
             
-            {/* Mensaje de Error (si es necesario) */}
+            {/* Mensaje de error (ej: "Debes seleccionar al menos un día") */}
             {error?.message && <Text style={styles.errorText}>{error.message}</Text>}
         </View>
     );
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     
-    // --- Fila de Botones ---
+    // Contenedor flexible para distribuir los 7 días
     daySelectorRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -122,14 +126,14 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 10, 
         borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.WHITE,
+        borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.BACKGROUND_DEFAULT,
         alignItems: 'center',
         justifyContent: 'center',
     },
     dayButtonActive: {
-        backgroundColor: COLORS.primary, // Púrpura (Color de marca)
-        borderColor: COLORS.primary,
+        backgroundColor: COLORS.PRIMARY,
+        borderColor: COLORS.PRIMARY,
     },
     dayButtonError: {
         borderColor: COLORS.ERROR_TEXT,
@@ -140,10 +144,10 @@ const styles = StyleSheet.create({
         color: COLORS.TEXT_PRIMARY,
     },
     dayButtonTextActive: {
-        color: COLORS.WHITE,
+        color: COLORS.BACKGROUND_DEFAULT,
     },
 
-    // --- Contador y Error ---
+    // Textos auxiliares
     selectedDaysCount: {
         fontSize: 13,
         color: COLORS.TEXT_MUTED,

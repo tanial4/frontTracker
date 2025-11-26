@@ -1,4 +1,4 @@
-interface User {
+export interface User {
     id: string;
     email: string;
     username: string;
@@ -7,7 +7,7 @@ interface User {
     updatedAt: Date;
 }
 
-interface Profile {
+export interface Profile {
     id: string;
     userId: string;
     fullName: string;
@@ -15,4 +15,13 @@ interface Profile {
     bio?: string | null;
     location?: string | null;
     user?: User;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  avatarURL: string | null;
+  createdAt: Date;
 }

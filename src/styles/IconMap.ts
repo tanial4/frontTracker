@@ -1,4 +1,4 @@
-import { Book, BookOpen, Clock, Cloud, Code, Droplet, Heart, LucideIcon, Music, Stethoscope, Target } from "lucide-react-native";
+import { Book, BookOpen, Clock, Cloud, Code, Droplet, Dumbbell, Heart, LucideIcon, Music, Stethoscope, Target } from "lucide-react-native";
 
 export const IconMap: Record<string, LucideIcon> = {
     Clock: Clock,
@@ -10,5 +10,5 @@ export const IconMap: Record<string, LucideIcon> = {
     Droplet: Droplet,
     Stethoscope: Stethoscope,
     Music: Music,
-    Target: Target, 
+    Dumbbell: Dumbbell
 };

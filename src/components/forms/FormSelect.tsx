@@ -1,15 +1,13 @@
-// src/components/forms/FormSelectElement.tsx
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Controller, useFormContext, FieldError } from 'react-hook-form';
-import { Dropdown } from 'react-native-element-dropdown'; // 🚨 La librería
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Dropdown } from 'react-native-element-dropdown'; 
+import { ChevronDown } from 'lucide-react-native';
 
-// 🚨 Importa tus constantes de color y estilos 🚨
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { formComponentStyles } from '../../styles/GlobalStyles'; 
 
+// Estructura estándar para poblar las opciones del menú.
 export interface SelectOption {
     label: string;
     value: string;
@@ -21,11 +19,13 @@ interface FormSelectElementProps {
     placeholder: string;
     options: SelectOption[];
     
-    // Opcional para accesibilidad y estilo
+    // Habilita una barra de búsqueda dentro del dropdown (útil para listas largas)
     search?: boolean;
 }
 
+// Componente wrapper para 'react-native-element-dropdown' conectado al contexto del formulario.
 export function FormSelect({ name, label, placeholder, options, search = false }: FormSelectElementProps) {
+    // Usamos useFormContext para evitar prop-drilling de 'control' y 'errors'
     const { control, formState: { errors } } = useFormContext();
     const error = errors[name] as FieldError | undefined;
     const hasError = !!error;
@@ -33,33 +33,36 @@ export function FormSelect({ name, label, placeholder, options, search = false }
     return (
         <View style={styles.container}>
             
-            {/* Label */}
             <Text style={styles.label}>{label}</Text>
             
             <Controller
                 control={control}
                 name={name}
-                defaultValue={placeholder} // El valor inicial puede ser el placeholder si el campo es opcional
                 render={({ field: { onChange, value } }) => (
                     <Dropdown
-                        // Datos y Manejo de Eventos (Binding RHF)
+                        // Configuración de datos
                         data={options}
                         value={value}
-                        onChange={item => onChange(item.value)} // 🚨 CRÍTICO: Pasa solo el 'value' a RHF
                         
-                        // Configuración Visual
+                        // Lógica de actualización:
+                        // La librería devuelve el objeto completo (item: { label, value }), 
+                        // pero al formulario solo le interesa guardar el 'value' primitivo.
+                        onChange={item => onChange(item.value)}
+                        
+                        // Configuración visual y textos
                         placeholder={placeholder}
                         search={search}
                         labelField="label"
                         valueField="value"
+                        searchPlaceholder="Buscar..."
                         
-                        // Estilos
+                        // Estilos condicionales (normal vs error)
                         style={[styles.dropdown, hasError && styles.dropdownError]}
                         placeholderStyle={styles.placeholderStyle}
                         selectedTextStyle={styles.selectedTextStyle}
                         inputSearchStyle={styles.inputSearchStyle}
                         
-                        // Íconos
+                        // Personalización del icono de flecha
                         renderRightIcon={() => (
                             <ChevronDown size={20} color={COLORS.TEXT_MUTED} />
                         )}
@@ -67,14 +70,14 @@ export function FormSelect({ name, label, placeholder, options, search = false }
                 )}
             />
             
-            {/* Mensaje de Error */}
+            {/* Mensaje de error al pie del componente */}
             {hasError && <Text style={styles.errorText}>{error?.message}</Text>}
         </View>
     );
 }
 
 // -------------------------------------------------------------
-// ESTILOS (Alineados con el diseño de tus FormInputs)
+// ESTILOS
 // -------------------------------------------------------------
 
 const styles = StyleSheet.create({
@@ -86,8 +89,8 @@ const styles = StyleSheet.create({
     dropdown: {
         height: 48,
         borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.INPUT_BG,
+        borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND,
         borderRadius: 8,
         paddingHorizontal: 12,
     },
@@ -105,6 +108,7 @@ const styles = StyleSheet.create({
     inputSearchStyle: {
         height: 40,
         fontSize: 16,
+        color: COLORS.TEXT_PRIMARY,
     },
     errorText: { 
         ...formComponentStyles.errorText, 

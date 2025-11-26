@@ -3,7 +3,7 @@ import { BRAND_COLORS as COLORS } from './Colors';
 
 
 export const globalLayout = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: COLORS.WHITE },
+    safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND_DEFAULT },
     keyboardAvoidingView: { flex: 1 },
     scrollViewContent: {
         flexGrow: 1, 
@@ -28,8 +28,8 @@ export const globalLayout = StyleSheet.create({
 export const formComponentStyles = StyleSheet.create({
 
     formCardBase: {
-        width: '100%', maxWidth: 380, borderWidth: 1, borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.WHITE, borderRadius: 12, padding: 20,
+        width: '100%', maxWidth: 380, borderWidth: 1, borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.BACKGROUND_DEFAULT, borderRadius: 12, padding: 20,
         shadowColor: COLORS.BLACK, shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1, shadowRadius: 3, elevation: 3,
     },
@@ -43,8 +43,8 @@ export const formComponentStyles = StyleSheet.create({
     },
     inputContainer: { 
         flexDirection: 'row', alignItems: 'center',
-        borderWidth: 1, borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.INPUT_BG, borderRadius: 8,
+        borderWidth: 1, borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND, borderRadius: 8,
         paddingHorizontal: 12,
     },
     input: { 
@@ -73,32 +73,32 @@ export const formComponentStyles = StyleSheet.create({
     buttonDisabled: { opacity: 0.5 },
 
     forgotPasswordButton: { alignSelf: 'flex-end', marginTop: 12 },
-    forgotPasswordText: { fontWeight: '500', color: COLORS.primary, fontSize: 13 }, 
+    forgotPasswordText: { fontWeight: '500', color: COLORS.PRIMARY, fontSize: 13 }, 
 
     signupContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, marginTop: 32 },
     signupText: { fontSize: 14, color: COLORS.TEXT_MUTED },
-    signupLink: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14, marginLeft: 4 }, 
+    signupLink: { fontWeight: 'bold', color: COLORS.PRIMARY, fontSize: 14, marginLeft: 4 }, 
 
     demoCard: {
         marginTop: 30, width: '100%', maxWidth: 380,
         borderRadius: 12, borderWidth: 1,
-        borderColor: COLORS.GRAY_BORDER,
-        backgroundColor: COLORS.INPUT_BG, 
+        borderColor: COLORS.BORDER_COLOR,
+        backgroundColor: COLORS.INPUT_BACKGROUND, 
         padding: 16,
         shadowColor: COLORS.BLACK, shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
     },
     demoTitle: { color: COLORS.TEXT_PRIMARY, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
     demoButton: {
-        backgroundColor: COLORS.WHITE, 
-        borderColor: COLORS.GRAY_BORDER,
+        backgroundColor: COLORS.BACKGROUND_DEFAULT, 
+        borderColor: COLORS.BORDER_COLOR,
         borderWidth: 1, paddingVertical: 10, borderRadius: 8,
     },
     demoButtonText: { color: COLORS.TEXT_PRIMARY, fontWeight: '600', fontSize: 15 },
     helpCard: {
         width: '90%',
         maxWidth: 400,
-        backgroundColor: COLORS.GRAY_ACCENT, 
+        backgroundColor: COLORS.ACCENT, 
         padding: 15,
         borderRadius: 10,
         marginTop: 30,

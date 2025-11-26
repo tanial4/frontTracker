@@ -1,4 +1,4 @@
-import { GoalTemplate } from "../interfaces/goal";
+import { GoalTemplate } from "../types/goal";
 
 // data/goal-templates.ts
 export const GOAL_TEMPLATES: GoalTemplate[] = [
@@ -33,38 +33,7 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
     categoryId: 'cat-read',
     targetType: 'DAILY',
     targetValue: 20,
-  },
-  {
-    id: 'goal-med-10min',
-    title: '10 Min de Meditación',
-    description: 'Medita 10 minutos diarios.',
-    categoryId: 'cat-med',
-    targetType: 'DAILY',
-    targetValue: 10,
-  },
-  {
-    id: 'goal-water-8cups',
-    title: '8 Vasos de Agua',
-    description: 'Bebe 8 vasos de agua al día.',
-    categoryId: 'cat-water',
-    targetType: 'DAILY',
-    targetValue: 8,
-  },
-  {
-    id: 'goal-ex-5week',
-    title: '5 Entrenamientos Semanales',
-    description: 'Entrena al menos 5 veces por semana.',
-    categoryId: 'cat-ex',
-    targetType: 'WEEKLY',
-    targetValue: 5,
-  },
-  {
-    id: 'goal-read-habit',
-    title: 'Hábito de Lectura',
-    description: 'Lee todos los días.',
-    categoryId: 'cat-read',
-    targetType: 'DAILY',
-  },
+  }
 ];
 
 
