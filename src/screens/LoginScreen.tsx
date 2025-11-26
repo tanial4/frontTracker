@@ -21,6 +21,9 @@ import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { login } from '../services/authApi';
+
 // 🔹 Navigation
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../components/navigation/types';
@@ -50,13 +53,16 @@ export default function LoginScreen({ navigation }: Props) {
 
       // 🔐 Aquí iría tu llamada real a la API de autenticación
       // await authService.login(data.email, data.password);
+      const res = await login(data.email, data.password);
+      await AsyncStorage.setItem('accessToken', res.accessToken);
+      await AsyncStorage.setItem('refreshToken', res.refreshToken);
 
       // Simulación de delay (resolver sin argumentos para cumplir la firma esperada)
       await new Promise<void>((resolve) => setTimeout(() => resolve(), 1200));
 
       console.log('Inicio de sesión simulado exitoso.');
 
-      // ✅ Navegar al tab principal y limpiar historial
+      //  Navegar al tab principal y limpiar historial
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTabs' }],
