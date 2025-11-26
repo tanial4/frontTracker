@@ -32,6 +32,7 @@ import { MOCK_USERS, MOCK_PROFILES } from './src/data/TestUserData';
 // Types
 import { RootTabParamList } from './src/components/navigation/types';
 import RankingsScreen from './src/screens/rankings/RankingScreen';
+import ProfileStackNavigator from './src/components/navigation/ProfileStack';
 
 // ------------------------
 // Auth Stack
@@ -124,29 +125,18 @@ function AppTabs({
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
+            <User color={color} size={size} />
           ),
         }}
       >
-        {(props) => (
-          <ProfileScreen
-            {...props}
-            user={
-              currentProfile ?? {
-                fullName: 'Usuario Demo',
-                email: 'demo@app.com',
-                createdAt: new Date(),
-                avatarURL: null,
-              }
-            }
-            stats={{ achievements: 3, longestStreak: 12 }}
+        {() => (
+          <ProfileStackNavigator
+            currentProfile={currentProfile}
             onLogout={onLogout}
-            onNavigate={(route) =>
-              props.navigation.navigate(route as never)
-            }
           />
         )}
       </Tab.Screen>
+
     </Tab.Navigator>
   );
 }

@@ -10,11 +10,37 @@ import {
 } from 'react-native';
 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
+import { Button } from '../../components/ui/button';
 
 import { MOCK_USERS, MOCK_PROFILES } from '../../data/TestUserData';
 import { RequestsSegmentBar } from '../../components/friendships/requestSegmentBar';
-import SentFriendRequestCard from '../../components/friendships/friendshipSentCars';
-import { FriendRequestCard } from '../../components/friendships/friendshipRequestCard';
+import SentFriendRequestCard from '../../components/friendships/friendshipRequestCard';
+// Small inline card for received requests with accept/reject actions
+function IncomingRequestCard({
+  friendshipId,
+  username,
+  onAccept,
+  onReject,
+}: {
+  friendshipId: string;
+  username: string;
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
+}) {
+  return (
+    <View style={{ padding: 12, borderBottomWidth: 1 }}>
+      <Text style={{ fontWeight: '600' }}>{username}</Text>
+      <View style={{ flexDirection: 'row', marginTop: 8, gap: 8 }}>
+        <Button onPress={() => onAccept(friendshipId)} style={{ marginRight: 8 }}>
+          Aceptar
+        </Button>
+        <Button onPress={() => onReject(friendshipId)} variant="outline">
+          Rechazar
+        </Button>
+      </View>
+    </View>
+  );
+}
 import { mapFriendshipToRequest, MOCK_FRIENDSHIPS } from '../../data/TestFriendshipData';
 
 // navegación
@@ -161,8 +187,6 @@ export function FriendRequestsScreen({ navigation }: Props) {
                         username: reqData.username,
                         avatarURL: reqData.avatarURL,
                       }}
-                      mutualFriendsCount={reqData.mutualFriendsCount}
-                      timeElapsed={reqData.timeElapsed}
                       onCancelRequest={() =>
                         console.log('Cancelar solicitud:', reqData.id)
                       }
@@ -178,13 +202,11 @@ export function FriendRequestsScreen({ navigation }: Props) {
                   onPress={goToProfile}
                   style={{ marginBottom: 8 }}
                 >
-                  <FriendRequestCard
-                    friendship={MOCK_FRIENDSHIPS.find(
-                      (f) => f.id === reqData.id
-                    )!}
-                    currentUserId={CURRENT_USER_ID}
-                    onAccept={(id) => console.log('Aceptar solicitud:', id)}
-                    onReject={(id) => console.log('Rechazar solicitud:', id)}
+                  <IncomingRequestCard
+                    friendshipId={reqData.id}
+                    username={reqData.username}
+                    onAccept={(id: string) => console.log('Aceptar solicitud:', id)}
+                    onReject={(id: string) => console.log('Rechazar solicitud:', id)}
                   />
                 </TouchableOpacity>
               );

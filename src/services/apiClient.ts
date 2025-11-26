@@ -6,11 +6,11 @@ export const api = axios.create({
 });
 
 // Interceptor para meter el token en cada request
-api.interceptors.request.use(async (config) => {
+api.interceptors.request.use(async (config: any) => {
   const token = await AsyncStorage.getItem('accessToken');
   if (token) {
-    config.headers.set('Authorization', `Bearer ${token}`);
-    
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

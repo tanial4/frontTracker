@@ -1,5 +1,3 @@
-// src/components/goals/templateGoaldCard.tsx
-
 import React from 'react';
 import {
   View,
@@ -24,7 +22,9 @@ import {
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { ActivityCategory, GoalTemplate } from '../../types/goal';
 
-// ---- MAPA ÍCONOS ---- //
+// Mapeo estático de Strings -> Componentes.
+// Esto permite que la base de datos guarde solo el nombre del icono ("Heart")
+// y el frontend decida qué componente renderizar.
 const IconMap: Record<string, LucideIcon> = {
   Clock,
   Heart,
@@ -41,19 +41,26 @@ const IconMap: Record<string, LucideIcon> = {
 interface TemplateCardProps {
   template: GoalTemplate;
   onSelect?: (templateId: string) => void;
+  // Determina si esta tarjeta está seleccionada actualmente (cambia el estilo visual)
   isActive: boolean;
+  // Pasamos todas las categorías para poder buscar el color e icono correcto
   allCategories: ActivityCategory[];
 }
 
+// Tarjeta seleccionable que muestra una "Plantilla de Meta".
+// Diseñada para mostrarse en una grilla (width ~46%).
 export function TemplateCard({
   template,
   onSelect,
   isActive,
   allCategories,
 }: TemplateCardProps) {
-  // 1) Categoría de la plantilla
+  
+  // 1. Resolución de datos visuales
+  // Buscamos la categoría asociada a esta plantilla para heredar su color e icono.
   const category = allCategories.find((cat) => cat.id === template.categoryId);
 
+  // Fallbacks seguros por si la categoría fue borrada o no tiene datos
   const color = category?.color || COLORS.PRIMARY;
   const iconName = category?.iconName || 'Target';
   const IconComponent = IconMap[iconName] || IconMap.Target;
@@ -67,22 +74,30 @@ export function TemplateCard({
       style={[
         styles.card,
         {
+          // Lógica de estado activo:
+          // Si está activa, el borde y el fondo toman el color de la categoría.
+          // Si no, se ve como una tarjeta gris estándar.
           borderColor: isActive ? color : COLORS.BORDER_COLOR,
-          borderLeftColor: color,
+          borderLeftColor: color, // La barra lateral de color siempre se muestra
+          
+          // Fondo con opacidad muy baja (12 hex) para dar un tinte sutil del color temático
           backgroundColor: isActive
-            ? color + '12' // un pelín de tinte cuando está activa
+            ? color + '12' 
             : COLORS.BACKGROUND_SECONDARY,
+            
+          // Elevación sutil para destacar la selección
           shadowOpacity: isActive ? 0.12 : 0.06,
           elevation: isActive ? 3 : 1,
         },
       ]}
     >
-      {/* Header: icono + título */}
+      {/* Sección Superior: Icono y Título */}
       <View style={styles.headerRow}>
         <View
           style={[
             styles.iconWrapper,
             {
+              // El contenedor del icono usa el color temático con transparencias
               borderColor: color + '80',
               backgroundColor: color + '18',
             },
@@ -96,6 +111,7 @@ export function TemplateCard({
             {template.title}
           </Text>
 
+          {/* Pill pequeña con el nombre de la categoría */}
           {category?.name && (
             <View style={styles.categoryPill}>
               <View
@@ -112,13 +128,13 @@ export function TemplateCard({
         </View>
       </View>
 
-      {/* Descripción */}
+      {/* Cuerpo: Descripción de la plantilla */}
       <Text style={styles.descriptionText} numberOfLines={3}>
         {template.description ||
           `Meta de tipo ${badgeText.toLowerCase()} para comenzar rápido.`}
       </Text>
 
-      {/* Footer: tipo de meta */}
+      {/* Pie: Badge con el tipo de frecuencia (DAILY, WEEKLY, etc) */}
       <View style={styles.footerRow}>
         <View
           style={[
@@ -139,7 +155,7 @@ export function TemplateCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: '46%',
+    width: '46%', // Ajustado para grid de 2 columnas con márgenes
     minHeight: 150,
     borderWidth: 1.5,
     borderRadius: 14,
@@ -147,6 +163,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     margin: 4,
     justifyContent: 'space-between',
+    // Borde izquierdo más grueso para acento de color tipo "tarjeta de tarea"
     borderLeftWidth: 5,
     shadowColor: COLORS.BLACK,
     shadowRadius: 4,
@@ -176,6 +193,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
   },
 
+  // Estilos del indicador de categoría (Pill)
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
