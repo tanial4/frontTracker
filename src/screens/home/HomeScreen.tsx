@@ -1,30 +1,40 @@
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
-import { useMemo, useState, useEffect } from "react";
-import { ScrollView, View, Text, StyleSheet } from "react-native";
-import GoalCheckinCard from "../../components/goals/goalCheckinCard";
-import GoalSelectionList from "../../components/goals/GoalSelectionList";
-import { MainLayout } from "../../components/layout/MainLayout";
-import { RootTabParamList } from "../../components/navigation/types";
-import CircularGoalsProgress from "../../components/stats/CircularGoalProgress";
-import { MOCK_CATEGORIES } from "../../data/Categories";
-import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from "../../data/TestGoalsData";
-import { MOCK_USERS } from "../../data/TestUserData";
-import { buildGoalProgressForUser } from "../../lib/goalProgress";
-import { Button } from "../../components/ui/button";
-import { BRAND_COLORS as COLORS } from "../../styles/Colors";
+// src/screens/home/HomeScreen.tsx
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { RootTabParamList } from '../../components/navigation/types';
+
+import { MainLayout } from '../../components/layout/MainLayout';
+import { CATEGORY_COLORS_MAP, BRAND_COLORS as COLORS } from '../../styles/Colors';
+
+import { MOCK_USERS } from '../../data/TestUserData';
+import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from '../../data/TestGoalsData';
+import { MOCK_CATEGORIES } from '../../data/Categories';
+
+import { buildGoalProgressForUser } from '../../lib/goalProgress';
+import HomeGoalsSection from '../../components/home/HomeGoalsSection';
+import HomeTodayCheckins from '../../components/home/HomeTodayCheckins';
+import { Button } from '../../components/ui/button';
+import { hasCheckinToday } from '../../lib/checkInHelpers';
+import SimpleCheckinButton from '../../components/goals/simpleCheckinCard';
 
 
-
-type HomeNav = BottomTabNavigationProp<RootTabParamList, 'Home'>;
+type HomeNavProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
 
 const CURRENT_USER_ID = MOCK_USERS[0].id;
 const MAX_SELECTED = 6;
 
 export function HomeScreen() {
-  const navigation = useNavigation<HomeNav>();
+  const navigation = useNavigation<HomeNavProp>();
 
-  // Progreso general de las metas (para gráfica + cards)
+  // Progreso general de las metas
   const goalProgressItems = useMemo(
     () =>
       buildGoalProgressForUser(
@@ -36,19 +46,19 @@ export function HomeScreen() {
     []
   );
 
-  const hasGoals = goalProgressItems.length > 0;
-
-  // ids de metas seleccionadas para la gráfica y la lista de cards
+  // ids seleccionados para la gráfica
   const [selectedGoalIds, setSelectedGoalIds] = useState<string[]>([]);
 
-  // Inicializar selección con las primeras 6 metas
+  // Inicializar selección con las primeras 6 metas disponibles
   useEffect(() => {
-    if (hasGoals && selectedGoalIds.length === 0) {
+    if (goalProgressItems.length > 0 && selectedGoalIds.length === 0) {
       setSelectedGoalIds(
         goalProgressItems.slice(0, MAX_SELECTED).map((g) => g.id)
       );
     }
-  }, [hasGoals, goalProgressItems, selectedGoalIds.length]);
+  }, [goalProgressItems, selectedGoalIds.length]);
+
+  const hasGoals = goalProgressItems.length > 0;
 
   const handleToggleGoal = (id: string) => {
     setSelectedGoalIds((prev) => {
@@ -62,19 +72,14 @@ export function HomeScreen() {
     });
   };
 
-  // Metas visibles (para gráfica + cards)
-  const visibleGoals = goalProgressItems.filter((g) =>
-    selectedGoalIds.includes(g.id)
-  );
-
   const handleGoToCreateGoal = () => {
     (navigation as any).navigate('CreateGoal');
   };
 
-  const handleCheckin = (goalId: string) => {
-    // Aquí después vas a llamar a tu endpoint / mutation de check-in
-    console.log('Hacer check-in para goal:', goalId);
-  };
+  // Metas visibles en el gráfico (máx 6) — la misma lista será usada para los checkins
+  const visibleGoals = goalProgressItems.filter((g) =>
+    selectedGoalIds.includes(g.id)
+  );
 
   return (
     <MainLayout
@@ -88,7 +93,7 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {!hasGoals ? (
-          // ---------- ESTADO VACÍO ----------
+          // 🔹 Estado vacío cuando no hay metas
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>Aún no tienes metas</Text>
             <Text style={styles.emptySubtitle}>
@@ -104,62 +109,26 @@ export function HomeScreen() {
           </View>
         ) : (
           <>
-            {/* ---------- GRÁFICA CIRCULAR ---------- */}
-            <View style={styles.chartWrapper}>
-              <CircularGoalsProgress goals={visibleGoals} />
-            </View>
-
-            {/* ---------- SELECTOR DE METAS (MÁX 6) ---------- */}
-            <GoalSelectionList
-              items={goalProgressItems}
+            <HomeGoalsSection
+              allItems={goalProgressItems}
+              visibleItems={visibleGoals}
               selectedIds={selectedGoalIds}
               onToggle={handleToggleGoal}
               maxSelected={MAX_SELECTED}
+              onCreate={handleGoToCreateGoal}
             />
 
-            <Button
-              style={styles.createGoalButton}
-              onPress={handleGoToCreateGoal}
-            >
-              Crear nueva meta
-            </Button>
-
-            {/* ---------- CARDS DE CHECK-IN POR META ---------- */}
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Tus metas activas</Text>
-            </View>
-
-            {visibleGoals.length === 0 && (
-              <Text style={styles.emptyText}>
-                Selecciona hasta 6 metas para ver su progreso aquí.
-              </Text>
-            )}
-
-            {visibleGoals.map((goalItem) => {
-              const goal = MOCK_GOALS.find((g) => g.id === goalItem.id);
-              const category = goal
-                ? MOCK_CATEGORIES.find((c) => c.id === goal.category?.id)
-                : undefined;
-
-              const accentColor =
-                category?.color ?? goalItem.color ?? COLORS.PRIMARY;
-
-              return (
-                <GoalCheckinCard
-                  key={goalItem.id}
-                  title={goal?.title ?? goalItem.label}
-                  description={
-                    goal?.description ??
-                    'Sigue avanzando con esta meta 💪'
-                  }
-                  daysActive={7}          // luego puedes calcularlo con rachas reales
-                  friendsCount={12}       // mock por ahora
-                  isActive={!goal?.isArchived}
-                  accentColor={accentColor}
-                  onContinue={() => handleCheckin(goalItem.id)}
-                />
-              );
-            })}
+            <HomeTodayCheckins
+              visibleItems={visibleGoals}
+              allGoals={MOCK_GOALS}
+              allCategories={MOCK_CATEGORIES}
+              allCheckins={MOCK_GOAL_CHECKINS}
+              currentUserId={CURRENT_USER_ID}
+              onCheckin={(goalId) => {
+                // placeholder: later call backend / mutation
+                console.log('Check-in realizado para meta:', goalId);
+              }}
+            />
           </>
         )}
       </ScrollView>
@@ -204,19 +173,35 @@ const styles = StyleSheet.create({
   createGoalButton: {
     marginTop: 8,
     paddingHorizontal: 20,
+    alignSelf: 'center',
   },
 
-  sectionHeaderRow: {
-    marginTop: 20,
-    marginBottom: 8,
+  // Sección "Tus metas hoy"
+  todaySection: {
+    marginTop: 16,
   },
-  sectionTitle: {
+  todaySectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.TEXT_PRIMARY,
-  },
-  emptyText: {
     marginBottom: 8,
+  },
+  goalCheckinRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: COLORS.BORDER_COLOR,
+  },
+  goalName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.TEXT_PRIMARY,
+  },
+
+  emptyText: {
+    marginTop: 4,
     fontSize: 13,
     color: COLORS.TEXT_MUTED,
     fontStyle: 'italic',

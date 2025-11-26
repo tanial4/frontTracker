@@ -1,8 +1,6 @@
-// src/components/friendships/SentFriendRequestCard.tsx
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { UserPlus, UserX, X } from 'lucide-react-native';
+import { UserX } from 'lucide-react-native';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Button } from '../ui/button';
@@ -12,24 +10,24 @@ interface SentFriendRequestCardProps {
     username: string;
     avatarURL: string | null;
   };
+  // Función para cancelar/revocar la solicitud enviada
   onCancelRequest: () => void;
-  mutualFriendsCount: number;
-  timeElapsed: string; // Ejemplo: "Hace 1 hora"
 }
 
+// Tarjeta visual para las solicitudes enviadas. 
+// Muestra al usuario destinatario y un botón para cancelar la acción.
 export function SentFriendRequestCard({
   friend,
   onCancelRequest,
-  mutualFriendsCount,
-  timeElapsed,
 }: SentFriendRequestCardProps) {
+  
   const hasImage = !!friend.avatarURL;
 
   return (
     <View style={styles.cardContainer}>
-      {/* 1. SECCIÓN SUPERIOR: Info y Avatar */}
+      {/* 1. SECCIÓN SUPERIOR: Información del usuario */}
       <View style={styles.infoWrapper}>
-        {/* Avatar */}
+        {/* Avatar: Prioriza la imagen, si no existe usa las iniciales */}
         <Avatar>
           {hasImage ? (
             <AvatarImage source={{ uri: friend.avatarURL! }} />
@@ -38,24 +36,24 @@ export function SentFriendRequestCard({
           )}
         </Avatar>
 
-        {/* Texto de Información */}
+        {/* Datos de texto */}
         <View style={styles.textWrapper}>
           <Text style={styles.nameText}>{friend.username}</Text>
+          {/* Mostramos el username de nuevo como subtítulo o metadato */}
           <Text style={styles.metaText}>
             {friend.username}
           </Text>
-
-          {/* Badge "Pendiente" y Tiempo */}
         </View>
       </View>
 
-      {/* 2. SECCIÓN INFERIOR: Botón de Cancelar Solicitud */}
+      {/* 2. SECCIÓN INFERIOR: Acciones */}
       <View style={styles.buttonContainer}>
         <Button
           onPress={onCancelRequest}
           variant="outline"
           style={styles.cancelButton}
         >
+          {/* Contenido del botón con icono alineado */}
           <View style={styles.cancelContent}>
             <UserX size={15} style={{ marginRight: 5 }} color={COLORS.TEXT_PRIMARY} />
             <Text style={styles.cancelButtonText}>Cancelar solicitud</Text>
@@ -67,7 +65,7 @@ export function SentFriendRequestCard({
 }
 
 // -------------------------------------------------------------
-// ESTILOS ESPECÍFICOS DE LA TARJETA DE SOLICITUD ENVIADA
+// ESTILOS
 // -------------------------------------------------------------
 
 const styles = StyleSheet.create({
@@ -82,7 +80,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // --- Sección de Información Superior ---
+  // --- Información Superior ---
   infoWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -97,46 +95,18 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     marginBottom: 2,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
   metaText: {
     fontSize: 13,
     color: COLORS.TEXT_MUTED,
   },
 
-  // --- Fila de Estado y Tiempo ---
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pendingBadge: {
-    backgroundColor: COLORS.ACCENT,
-    borderRadius: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginRight: 10,
-  },
-  pendingBadgeText: {
-    color: COLORS.BACKGROUND_DEFAULT,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  timeText: {
-    fontSize: 12,
-    color: COLORS.TEXT_MUTED,
-  },
-
-  // --- Sección de Botón ---
+  // --- Botón de Acción ---
   buttonContainer: {
     margin: 10,
-
   },
   cancelButton: {
     width: '100%',
-    height: 30,
+    height: 30, // Botón compacto
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.BACKGROUND_DEFAULT,

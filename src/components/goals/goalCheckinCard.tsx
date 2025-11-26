@@ -6,18 +6,26 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Clock } from 'lucide-react-native'; // Puedes cambiarlo según la categoría
+import { Clock } from 'lucide-react-native'; 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Button } from '../ui/button';
 
+// Propiedades para configurar la tarjeta de seguimiento.
+// Permite personalizar colores y datos para reutilizarla en diferentes contextos (Home, Listas, Detalles).
 interface GoalCheckinCardProps {
   title: string;
   description?: string;
-  daysActive?: number;        // ej: 7 días
-  friendsCount?: number;      // ej: 12 amigos
-  isActive?: boolean;         // etiqueta "Activa"
-  accentColor?: string;       // color de categoría
-  onContinue: () => void;     // hacer check-in / abrir detalle
+  
+  // Datos estadísticos opcionales
+  daysActive?: number;        // Racha o días acumulados
+  friendsCount?: number;      // Número de personas en el mismo reto
+  
+  // Estado visual
+  isActive?: boolean;         // Controla la visibilidad del badge "Activa"
+  accentColor?: string;       // Color temático de la categoría (se usa para bordes, iconos y botones)
+  
+  // Acción principal (usualmente navegar al detalle o marcar check-in)
+  onContinue: () => void;     
 }
 
 export function GoalCheckinCard({
@@ -30,9 +38,12 @@ export function GoalCheckinCard({
   onContinue,
 }: GoalCheckinCardProps) {
   return (
+    // El borde de la tarjeta toma el color de la categoría para diferenciar visualmente los tipos de metas.
     <View style={[styles.card, { borderColor: accentColor }]}>
-      {/* Fila superior: icono + estado */}
+      
+      {/* 1. Cabecera: Icono temático y Badge de estado */}
       <View style={styles.topRow}>
+        {/* Usamos una opacidad manual ('15') sobre el hex para el fondo del icono */}
         <View style={[styles.iconWrapper, { backgroundColor: accentColor + '15' }]}>
           <Clock size={22} color={accentColor} />
         </View>
@@ -46,7 +57,7 @@ export function GoalCheckinCard({
         )}
       </View>
 
-      {/* Título + descripción */}
+      {/* 2. Contenido principal: Título y Descripción corta */}
       <Text style={styles.title}>{title}</Text>
       {!!description && (
         <Text style={styles.description} numberOfLines={2}>
@@ -54,7 +65,7 @@ export function GoalCheckinCard({
         </Text>
       )}
 
-      {/* Stats: días + amigos */}
+      {/* 3. Métricas: Se renderizan solo si los datos numéricos existen */}
       <View style={styles.statsRow}>
         {typeof daysActive === 'number' && (
           <TouchableOpacity activeOpacity={0.8}>
@@ -64,6 +75,7 @@ export function GoalCheckinCard({
 
         {typeof friendsCount === 'number' && (
           <View style={styles.friendsWrapper}>
+            {/* Nota: Aquí se usa un emoji literal, considerar cambiar por icono Lucide para consistencia visual */}
             <Text style={styles.friendsIcon}>👥</Text>
             <Text style={styles.friendsText}>
               {friendsCount} amigos
@@ -72,7 +84,7 @@ export function GoalCheckinCard({
         )}
       </View>
 
-      {/* Botón de acción */}
+      {/* 4. Botón de Acción Principal */}
       <Button
         style={[styles.continueButton, { backgroundColor: accentColor }]}
         onPress={onContinue}
@@ -83,6 +95,10 @@ export function GoalCheckinCard({
   );
 }
 
+// -------------------------------------------------------------
+// ESTILOS
+// -------------------------------------------------------------
+
 const styles = StyleSheet.create({
   card: {
     borderWidth: 2,
@@ -90,6 +106,7 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
     marginBottom: 14,
+    // Sombras sutiles para dar profundidad (iOS y Android)
     shadowColor: COLORS.BLACK,
     shadowOpacity: 0.06,
     shadowRadius: 4,

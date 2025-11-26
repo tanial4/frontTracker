@@ -39,7 +39,7 @@ export const BRAND_COLORS = {
     BUTTON_SECONDARY_BG: '#f0f0f0',      // Gris claro para botones secundarios
     
     // --- 2. ESTADO Y NOTIFICACIONES ---
-    STATE_SUCCESS: '#22c55e',            // Éxito (Verde)
+    STATE_SUCCESS: '#6fa984ff',            // Éxito (Verde)
     STATE_WARNING: '#f97316',            // Warning (Naranja)
     STATE_DESTRUCTIVE: '#d4183d',        // Destructive (Rojo)
     STATE_INFO: '#3b82f6',               // Info (Azul)

@@ -1,177 +1,228 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Platform, KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
+// src/screens/SignupScreen.tsx
+
+import React from 'react';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Flame } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FormInput } from '../components/forms/formInput'; 
-import { Button } from '../components/ui/button'; 
-import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema'; 
 
+import { FormInput } from '../components/forms/formInput';
+import { Button } from '../components/ui/button';
+
+import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
-import { globalLayout } from '../styles/GlobalStyles';
 
 interface SignupScreenProps {
-    onSignup: (data: SignUpFormType) => void; 
-    onSwitchToLogin: () => void;
+  onSignup?: (data: SignUpFormType) => void;
+  onSignupSuccess?: () => void;
+  onSwitchToLogin?: () => void;
+  navigation?: any;
 }
 
-export function SignupScreen({ onSignup, onSwitchToLogin }: SignupScreenProps) {
-    const insets = useSafeAreaInsets();
+export function SignupScreen({
+  onSignup,
+  onSignupSuccess,
+  onSwitchToLogin,
+  navigation,
+}: SignupScreenProps) {
+  const insets = useSafeAreaInsets();
 
-    const methods = useForm<SignUpFormType>({
-        resolver: zodResolver(SignupSchema),
-        defaultValues: {
-            username: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-        },
-        mode: 'onBlur',
-    });
+  const methods = useForm<SignUpFormType>({
+    resolver: zodResolver(SignupSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    mode: 'onBlur',
+  });
 
-    const { handleSubmit, formState: { isSubmitting, errors } } = methods;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
 
-    const onSubmit = (data: SignUpFormType) => {
-        console.log('Datos de Registro:', data);
-        onSignup(data); 
-    };
+  const onSubmit = (data: SignUpFormType) => {
+    console.log('Datos de Registro:', data);
+    if (onSignup) {
+      onSignup(data);
+    } else if (onSignupSuccess) {
+      onSignupSuccess();
+    } else if (onSwitchToLogin) {
+      onSwitchToLogin();
+    } else if (navigation) {
+      navigation.replace('Login');
+    }
+  };
 
-    return (
-        <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-            <KeyboardAvoidingView 
-                style={styles.keyboardAvoidingView}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-            >
-                <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-                    
-                    <View style={styles.headerContainer}>
-                        <View style={styles.logoWrapper}>
-                            <Flame size={32} color={COLORS.PRIMARY} />
-                        </View>
-                        <Text style={styles.title}>Crear cuenta</Text>
-                        <Text style={styles.subtitle}>Únete y comienza tus rachas con amigos</Text>
-                    </View>
-                    <View style={styles.formCard}>
-                        <FormProvider {...methods}>
-                            <View style={styles.inputGroup}>
-                                <FormInput name="username" label="Nombre completo" placeholder="Tu nombre" />
-                                <FormInput name="email" label="Email" keyboardType="email-address" placeholder="tu@email.com" />
-                                <FormInput name="password" label="Contraseña" isPassword={true} placeholder="Mínimo 6 caracteres" />
-                                <FormInput name="confirmPassword" label="Confirmar contraseña" isPassword={true} placeholder="Confirma tu contraseña" />
-                                <Button 
-                                    onPress={handleSubmit(onSubmit)} 
-                                    style={[styles.loginButton]}
-                                    isLoading={isSubmitting}
-                                >
-                                    <Text>Crear Cuenta</Text>
-                                </Button>
-                            </View>
-                        </FormProvider>
-                    </View>
-                    <View style={styles.loginLinkContainer}>
-                        <Text style={styles.loginLinkText}>
-                            ¿Ya tienes cuenta?
-                            <Text onPress={onSwitchToLogin} style={styles.loginLinkText}>
-                                {' '}Iniciar sesión
-                            </Text>
-                        </Text>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
-    );
+  return (
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HEADER */}
+          <View style={styles.headerContainer}>
+            <View style={styles.logoWrapper}>
+              <Flame size={32} color={COLORS.BACKGROUND_DEFAULT} />
+            </View>
+            <Text style={styles.title}>Crear cuenta</Text>
+            <Text style={styles.subtitle}>
+              Únete y comienza tus rachas con amigos
+            </Text>
+          </View>
+
+          {/* FORM CARD */}
+          <View style={styles.formCard}>
+            <FormProvider {...methods}>
+              <View style={styles.inputGroup}>
+                <FormInput
+                  name="username"
+                  label="Nombre completo"
+                  placeholder="Tu nombre"
+                />
+                <FormInput
+                  name="email"
+                  label="Email"
+                  keyboardType="email-address"
+                  placeholder="tu@email.com"
+                />
+                <FormInput
+                  name="password"
+                  label="Contraseña"
+                  isPassword
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <FormInput
+                  name="confirmPassword"
+                  label="Confirmar contraseña"
+                  isPassword
+                  placeholder="Confirma tu contraseña"
+                />
+
+                <Button
+                  onPress={handleSubmit(onSubmit)}
+                  style={styles.loginButton}
+                  isLoading={isSubmitting}
+                >
+                  <Text style={styles.loginButtonText}>Crear cuenta</Text>
+                </Button>
+              </View>
+            </FormProvider>
+
+            {/* LINK A LOGIN */}
+            <View style={styles.loginLinkContainer}>
+              <Text style={styles.loginLinkText}>
+                ¿Ya tienes cuenta?{' '}
+                <Text
+                  onPress={onSwitchToLogin}
+                  style={styles.loginLink}
+                >
+                  Iniciar sesión
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
-// 🚨 Definición de Estilos (Alineados con LoginScreen) 🚨
-// ... (Utiliza el mismo bloque de estilos StyleSheet.create que definimos para LoginScreen,
-//       pero asegúrate de añadir:
-
+// 🎨 Reutilizamos mismos estilos base que LoginScreen
 const styles = StyleSheet.create({
-    // ... (Estilos de LoginScreen para safeArea, formCard, etc.) ...
-    
-    // NUEVOS ESTILOS
-    loginLinkContainer: {
-        marginTop: 30, 
-    },
-    loginLinkText: {
-        fontSize: 14,
-        color: COLORS.TEXT_MUTED,
-        textAlign: 'center',
-    },
-    loginLink: {
-        fontWeight: 'bold',
-        color: COLORS.PRIMARY, // Color de acento púrpura
-        fontSize: 14,
-    },
-    // --- Layout Base ---
-    safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND_DEFAULT },
-    keyboardAvoidingView: { flex: 1 },
-    scrollViewContent: {
-        flexGrow: 1, 
-        alignItems: 'center',
-        paddingHorizontal: 20, 
-        paddingTop: 40,        
-        paddingBottom: 20,     
-    },
+  // --- Layout Base ---
+  safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND_DEFAULT },
+  keyboardAvoidingView: { flex: 1 },
+  scrollViewContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
 
-    // --- Header ---
-    headerContainer: { alignItems: 'center', marginBottom: 30 },
-    logoWrapper: {
-        width: 60, height: 60, borderRadius: 15,
-        backgroundColor: COLORS.PRIMARY, 
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: 12,
-    },
-    title: { fontSize: 20, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY, marginBottom: 3 },
-    subtitle: { color: COLORS.TEXT_MUTED, fontSize: 14, textAlign: 'center' },
+  // --- Header ---
+  headerContainer: { alignItems: 'center', marginBottom: 30 },
+  logoWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 15,
+    backgroundColor: COLORS.PRIMARY,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 3,
+  },
+  subtitle: {
+    color: COLORS.TEXT_MUTED,
+    fontSize: 14,
+    textAlign: 'center',
+  },
 
-    // --- Formulario (Tarjeta) ---
-    formCard: {
-        width: '100%', maxWidth: 380,
-        borderWidth: 1, borderColor: COLORS.BORDER_COLOR,
-        backgroundColor: COLORS.INPUT_BACKGROUND,
-        borderRadius: 12, padding: 20,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1, shadowRadius: 3, elevation: 3,
-    },
-    inputGroup: { gap: 12, marginBottom: 20 },
+  // --- Formulario (Tarjeta) ---
+  formCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 12,
+    padding: 20,
+  },
+  inputGroup: {
+    gap: 12,
+    marginBottom: 20,
+  },
 
-    // --- Botones y Enlaces ---
-    loginButton: {
-        backgroundColor: COLORS.BUTTON_PRIMARY_BG,
-        paddingVertical: 10, borderRadius: 8,
-    },
-    loginButtonText: {
-        color: COLORS.BUTTON_PRIMARY_TEXT, fontSize: 15, fontWeight: '600',
-    },
-    buttonDisabled: { opacity: 0.5 },
+  // --- Botón principal ---
+  loginButton: {
+    backgroundColor: COLORS.BUTTON_PRIMARY_BG,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: COLORS.BUTTON_PRIMARY_TEXT,
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 
-    forgotPasswordButton: { alignSelf: 'flex-end', marginTop: 12 },
-    forgotPasswordText: { fontWeight: '500', color: COLORS.TEXT_MUTED, fontSize: 13 },
-    
-    // --- Footer ---
-    signupContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, marginTop: 32 },
-    signupText: { fontSize: 14, color: COLORS.TEXT_MUTED },
-    signupLink: { fontWeight: 'bold', color: COLORS.PRIMARY, fontSize: 14 },
-
-    // --- Demo Rápido ---
-    demoCard: {
-        marginTop: 30, width: '100%', maxWidth: 380,
-        borderRadius: 12, borderWidth: 1,
-        borderColor: COLORS.BORDER_COLOR,
-        backgroundColor: COLORS.INPUT_BACKGROUND, 
-        padding: 16,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
-    },
-    demoTitle: { color: COLORS.TEXT_PRIMARY, fontWeight: '500', marginBottom: 10, textAlign: 'center' },
-    demoButton: {
-        backgroundColor: COLORS.BACKGROUND_DEFAULT, // Botón secundario blanco
-        borderColor: COLORS.BORDER_COLOR,
-        borderWidth: 1,
-        paddingVertical: 10,
-        borderRadius: 8,
-    },
-    demoButtonText: { color: COLORS.TEXT_PRIMARY, fontWeight: '600', fontSize: 15 },
+  // --- Link para volver a Login ---
+  loginLinkContainer: {
+    marginTop: 30,
+  },
+  loginLinkText: {
+    fontSize: 14,
+    color: COLORS.TEXT_MUTED,
+    textAlign: 'center',
+  },
+  loginLink: {
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    fontSize: 14,
+  },
 });
+
+export default SignupScreen;

@@ -1,77 +1,70 @@
+// src/types/streak.ts
 
+export type StreakVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
 
-// -----------------------------------------------------
-// ENUM / UNION: StreakRole
+export type StreakMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
-import { Use } from "react-native-svg";
-import { UserProfile } from "./user";
+export type StreakCheckinSource = 'MANUAL' | 'GOAL_LINKED';
 
-// -----------------------------------------------------
-export type StreakRole = 'OWNER' | 'ADMIN' | 'MEMBER';
-
-// -----------------------------------------------------
-// MODELO PRINCIPAL: Streak (racha / grupo)
-// -----------------------------------------------------
-export interface Streak {
-  id: string;
-  title: string;
-  description?: string | null;
-
-  startDate: Date;              // o string si tu API devuelve ISO strings
-  endDate?: Date | null;        // puede ser abierta
-
-  ruleJson: unknown;            // Prisma Json -> lo dejamos genérico
-  createdById: string;
-
-  createdAt: Date;
-  updatedAt: Date;
-
-  // Relaciones opcionales (no siempre vienen en todas las queries)
-  createdBy?: UserProfile;
-  members?: StreakMember[];
-  checkins?: StreakCheckin[];
-  chatRooms?: ChatRoom[];       // si ya tienes ChatRoom, impórtalo y quita este stub
+export interface StreakRuleJson {
+  minCheckinsPerWeek?: number;
+  maxMissedDays?: number;
+  allowBackfill?: boolean;
+  // espacio para reglas futuras
+  [key: string]: any;
 }
 
-// -----------------------------------------------------
-// MIEMBROS DE LA RACHA
-// -----------------------------------------------------
-export interface StreakMember {
+export interface Streak {
+  id: string;
+  name: string;
+  description?: string | null;
+
+  ownerUserId: string;
+
+  // opcional: link a categoría (Pomodoro, Ejercicio, etc.)
+  categoryId?: string | null;
+
+  visibility: StreakVisibility;
+
+  startDate: string;           // ISO string
+  endDate?: string | null;     // ISO string o null
+
+  ruleJson?: StreakRuleJson | null;
+
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface StreakMembership {
   id: string;
   streakId: string;
   userId: string;
-  joinedAt: Date;           // @default(now())
-  role: StreakRole;         // OWNER | ADMIN | MEMBER
 
-  // Relaciones
-  streak?: Streak;
-  user?: UserProfile;
+  role: StreakMemberRole;      // OWNER / ADMIN / MEMBER
+  joinedAt: string;
+  leftAt?: string | null;
+
+  // para UI (silenciar notis de esta racha)
+  isMuted: boolean;
+
+  // último check-in de este usuario en esta racha
+  lastCheckinAt?: string | null;
 }
 
-// -----------------------------------------------------
-// CHECKINS / REGISTROS DIARIOS
-// -----------------------------------------------------
 export interface StreakCheckin {
   id: string;
   streakId: string;
   userId: string;
 
-  date: Date;
-  done: boolean;           // @default(false)
-  metadata?: unknown | null; // Prisma Json?
+  createdAt: string;           // fecha del check-in (ISO)
 
-  createdAt: Date;         // @default(now())
+  // opcional: comentario o nota corta
+  note?: string | null;
 
-  // Relaciones
-  streak?: Streak;
-  user?: UserProfile;
-}
+  // de dónde viene el check-in
+  source: StreakCheckinSource; // MANUAL | GOAL_LINKED
 
-// -----------------------------------------------------
-// Stub de ChatRoom (si ya lo tienes en otro archivo, borra esto y haz import)
-// -----------------------------------------------------
-export interface ChatRoom {
-  id: string;
-  streakId: string;
-  // agrega aquí los campos reales cuando tengas el modelo completo
+  // si viene de una goal específica
+  goalId?: string | null;
 }

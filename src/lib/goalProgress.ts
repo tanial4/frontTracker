@@ -113,6 +113,7 @@ userId: string, goals: Goal[], checkins: GoalCheckIn[], MOCK_CATEGORIES: Activit
       label,
       percentage,
       color,
+      categoryId: goal.category?.id ?? null,
     };
 
     return item;

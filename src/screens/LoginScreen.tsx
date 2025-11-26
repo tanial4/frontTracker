@@ -1,6 +1,6 @@
 // src/screens/LoginScreen.tsx
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,43 +8,59 @@ import {
   SafeAreaView,
   Platform,
   KeyboardAvoidingView,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Flame, Eye } from 'lucide-react-native';
+import { Flame } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
 import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
+import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
 
+<<<<<<< Updated upstream
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login } from '../services/authApi';
 
 // 🔹 Navigation
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../components/navigation/types';
+=======
+// Ajusta estos imports al nombre real de tu schema de login
+>>>>>>> Stashed changes
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-export default function LoginScreen({ navigation }: Props) {
+interface LoginScreenProps {
+  onLogin: () => void;           // lo maneja RootNavigator (handleLogin)
+  onDemoLogin: () => void;       // lo maneja RootNavigator (handleDemoLogin)
+  onSwitchToSignup: () => void;  // navega a Signup en el AuthStack
+}
+
+export function LoginScreen({
+  onLogin,
+  onDemoLogin,
+  onSwitchToSignup,
+}: LoginScreenProps) {
   const insets = useSafeAreaInsets();
 
   const methods = useForm<LoginFormType>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: {
+      email: '',
+      password: '',
+    },
     mode: 'onBlur',
   });
 
   const {
     handleSubmit,
-    setValue,
     formState: { isSubmitting },
   } = methods;
 
+<<<<<<< Updated upstream
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data: LoginFormType) => {
@@ -85,6 +101,12 @@ export default function LoginScreen({ navigation }: Props) {
     setValue('email', 'demo@example.com');
     setValue('password', 'password-demo');
     handleSubmit(onSubmit)();
+=======
+  const handleLoginSubmit = (data: LoginFormType) => {
+    console.log('Login data:', data);
+    // Aquí luego harás tu llamada al backend
+    onLogin(); // RootNavigator se encarga de cambiar isAuthenticated
+>>>>>>> Stashed changes
   };
 
   return (
@@ -101,20 +123,19 @@ export default function LoginScreen({ navigation }: Props) {
         <ScrollView
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
           {/* HEADER */}
           <View style={styles.headerContainer}>
             <View style={styles.logoWrapper}>
               <Flame size={32} color={COLORS.BACKGROUND_DEFAULT} />
             </View>
-            <Text style={styles.title}>¡Bienvenido de vuelta!</Text>
+            <Text style={styles.title}>LifeTraker</Text>
             <Text style={styles.subtitle}>
-              Continúa con tus rachas junto a tus amigos
+              Inicia sesión para seguir tus metas y rachas
             </Text>
           </View>
 
-          {/* CARD FORMULARIO */}
+          {/* FORM CARD */}
           <View style={styles.formCard}>
             <FormProvider {...methods}>
               <View style={styles.inputGroup}>
@@ -122,67 +143,50 @@ export default function LoginScreen({ navigation }: Props) {
                   name="email"
                   label="Email"
                   keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholder="ejemplo@correo.com"
+                  placeholder="tu@email.com"
                 />
-
                 <FormInput
                   name="password"
                   label="Contraseña"
-                  isPassword={!showPassword}
-                  secureTextEntry={!showPassword}
-                  placeholder="••••••••"
-                  rightIcon={
-                    <TouchableOpacity
-                      onPress={() => setShowPassword((prev) => !prev)}
-                      style={styles.passwordToggle}
-                    >
-                      <Eye size={20} color={COLORS.TEXT_MUTED} />
-                    </TouchableOpacity>
-                  }
+                  isPassword
+                  placeholder="Mínimo 6 caracteres"
                 />
 
-                <TouchableOpacity
-                  onPress={handleForgotPassword}
-                  style={styles.forgotPasswordButton}
+                <Button
+                  onPress={handleSubmit(handleLoginSubmit)}
+                  style={styles.loginButton}
+                  isLoading={isSubmitting}
                 >
-                  <Text style={styles.forgotPasswordText}>
-                    ¿Olvidaste tu contraseña?
-                  </Text>
-                </TouchableOpacity>
+                  <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+                </Button>
               </View>
-
-              <Button
-                onPress={handleSubmit(onSubmit)}
-                isLoading={isSubmitting}
-              >
-                <Text>Iniciar sesión</Text>
-              </Button>
             </FormProvider>
-          </View>
 
-          {/* LINK A SIGNUP */}
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>
-              ¿No tienes cuenta?{' '}
-              <Text
-                onPress={handleSwitchToSignup}
-                style={styles.signupLink}
-              >
-                Regístrate
+            {/* ENLACE A SIGNUP */}
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>
+                ¿Aún no tienes cuenta?{' '}
+                <Text
+                  style={styles.signupLink}
+                  onPress={onSwitchToSignup}
+                >
+                  Crear cuenta
+                </Text>
               </Text>
-            </Text>
+            </View>
           </View>
 
-          {/* DEMO */}
+          {/* DEMO CARD */}
           <View style={styles.demoCard}>
-            <Text style={styles.demoTitle}>Demo rápido:</Text>
+            <Text style={styles.demoTitle}>
+              ¿Solo quieres probar la app?
+            </Text>
+
             <Button
-              onPress={handleDemoLogin}
               style={styles.demoButton}
-              textStyle={styles.demoButtonText}
+              onPress={onDemoLogin}
             >
-              <Text>Iniciar como Demo</Text>
+              <Text style={styles.demoButtonText}>Entrar en modo demo</Text>
             </Button>
           </View>
         </ScrollView>
@@ -191,7 +195,9 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
+// 🎨 Estilos compartidos con SignupScreen
 const styles = StyleSheet.create({
+  // --- Layout Base ---
   safeArea: { flex: 1, backgroundColor: COLORS.BACKGROUND_DEFAULT },
   keyboardAvoidingView: { flex: 1 },
   scrollViewContent: {
@@ -202,6 +208,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
 
+  // --- Header ---
   headerContainer: { alignItems: 'center', marginBottom: 30 },
   logoWrapper: {
     width: 60,
@@ -218,27 +225,37 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     marginBottom: 3,
   },
-  subtitle: { color: COLORS.TEXT_MUTED, fontSize: 14, textAlign: 'center' },
-
-  passwordToggle: {
-    padding: 8,
+  subtitle: {
+    color: COLORS.TEXT_MUTED,
+    fontSize: 14,
+    textAlign: 'center',
   },
 
+  // --- Formulario (Tarjeta) ---
   formCard: {
     width: '100%',
     maxWidth: 380,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_COLOR,
-    backgroundColor: COLORS.BACKGROUND_DEFAULT,
     borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
-  inputGroup: { gap: 12, marginBottom: 20 },
+  inputGroup: {
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  // --- Botones y Enlaces ---
+  loginButton: {
+    backgroundColor: COLORS.BUTTON_PRIMARY_BG,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: COLORS.BUTTON_PRIMARY_TEXT,
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  buttonDisabled: { opacity: 0.5 },
 
   forgotPasswordButton: { alignSelf: 'flex-end', marginTop: 12 },
   forgotPasswordText: {
@@ -247,15 +264,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
+  // --- Footer: link a Signup ---
   signupContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 16,
-    marginTop: 32,
+    marginTop: 8,
   },
   signupText: { fontSize: 14, color: COLORS.TEXT_MUTED },
-  signupLink: { fontWeight: 'bold', color: COLORS.PRIMARY, fontSize: 14 },
+  signupLink: {
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    fontSize: 14,
+  },
 
+  // --- Demo Rápido ---
   demoCard: {
     marginTop: 30,
     width: '100%',
@@ -278,7 +301,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   demoButton: {
-    backgroundColor: COLORS.BACKGROUND_SECONDARY,
+    backgroundColor: COLORS.BACKGROUND_DEFAULT,
     borderColor: COLORS.BORDER_COLOR,
     borderWidth: 1,
     paddingVertical: 10,
@@ -288,5 +311,8 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     fontWeight: '600',
     fontSize: 15,
+    textAlign: 'center',
   },
 });
+
+export default LoginScreen;

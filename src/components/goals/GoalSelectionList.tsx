@@ -1,5 +1,3 @@
-// src/components/goals/GoalSelectionList.tsx
-
 import React from 'react';
 import {
   View,
@@ -14,22 +12,30 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { GoalProgressItem } from '../stats/CircularGoalProgress';
 
 interface GoalSelectionListProps {
+  // Lista de metas disponibles para mostrar en la gráfica
   items: GoalProgressItem[];
+  // Array de IDs que están actualmente activos/visibles
   selectedIds: string[];
+  // Función para agregar o quitar un ID del array
   onToggle: (id: string) => void;
+  // Límite máximo de elementos seleccionables (por defecto 6 para no saturar la UI)
   maxSelected?: number;
 }
 
+// Componente de lista de selección múltiple con límite.
+// Se usa para filtrar qué metas aparecen en las gráficas de estadísticas.
 export function GoalSelectionList({
   items,
   selectedIds,
   onToggle,
   maxSelected = 6,
 }: GoalSelectionListProps) {
+  
   const selectedCount = selectedIds.length;
 
   return (
     <View style={styles.container}>
+      {/* Cabecera con contador de selección (ej: 3/6) */}
       <View style={styles.headerRow}>
         <Text style={styles.title}>Metas en la gráfica</Text>
         <Text style={styles.counter}>
@@ -40,23 +46,31 @@ export function GoalSelectionList({
       <View style={styles.list}>
         {items.map((goal) => {
           const isSelected = selectedIds.includes(goal.id);
+          
+          // Lógica de bloqueo:
+          // Si ya alcanzamos el límite Y este ítem NO está seleccionado,
+          // entonces debe bloquearse para impedir nuevas selecciones.
           const isLimitReached = selectedCount >= maxSelected && !isSelected;
 
           return (
             <TouchableOpacity
               key={goal.id}
+              // Quitamos el feedback táctil si está deshabilitado
               activeOpacity={isLimitReached ? 1 : 0.8}
               onPress={() => {
+                // Prevenir acción si se alcanzó el límite
                 if (isLimitReached) return;
                 onToggle(goal.id);
               }}
               style={[
                 styles.item,
                 isSelected && styles.itemSelected,
+                // Aplicamos estilo visual de "deshabilitado" (opacidad)
                 isLimitReached && !isSelected && styles.itemDisabled,
               ]}
             >
               <View style={styles.leftRow}>
+                {/* Punto de color que corresponde a la línea en la gráfica */}
                 <View
                   style={[
                     styles.colorDot,
@@ -81,6 +95,7 @@ export function GoalSelectionList({
                 </View>
               </View>
 
+              {/* Checkbox visual a la derecha */}
               <View style={styles.rightRow}>
                 {isSelected ? (
                   <CheckCircle2
@@ -90,6 +105,7 @@ export function GoalSelectionList({
                 ) : (
                   <Circle
                     size={20}
+                    // Color tenue si está deshabilitado, normal si es seleccionable
                     color={
                       isLimitReached
                         ? COLORS.TEXT_MUTED
@@ -106,6 +122,7 @@ export function GoalSelectionList({
   );
 }
 
+// Definición estricta de tipos para los estilos
 interface Style {
   container: ViewStyle;
   headerRow: ViewStyle;
@@ -161,6 +178,7 @@ const styles = StyleSheet.create<Style>({
     borderRadius: 10,
   },
   itemSelected: {
+    // Fondo sutil usando opacidad hexadecimal sobre el color primario
     backgroundColor: COLORS.PRIMARY + '10',
   },
   itemDisabled: {

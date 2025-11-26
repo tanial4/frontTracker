@@ -1,5 +1,3 @@
-// src/screens/profile/ProfileScreen.tsx
-
 import React from 'react';
 import {
   View,
@@ -9,21 +7,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { LogOut, Settings, Bell, Users, Award } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { globalLayout } from '../../styles/GlobalStyles';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
-import { BottomNavigationBar } from '../../components/navigation/navBar';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Profile } from '../../types/user';
 
-
-
-// -------------------------------------------------------------
 // TIPOS
-// -------------------------------------------------------------
 interface ProfileScreenProps {
-  user?: Profile & {
+  user?: Partial<Profile> & {
     email: string;
     createdAt: Date;
     avatarURL?: string | null;
@@ -36,9 +28,7 @@ interface ProfileScreenProps {
   onNavigate: (route: string) => void;
 }
 
-// -------------------------------------------------------------
-// DATOS FIJOS DEL MENÚ DE OPCIONES
-// -------------------------------------------------------------
+// MENÚ
 const OPTIONS_MENU = [
   { title: 'Configuración', icon: Settings, route: 'Settings' },
   { title: 'Recordatorios', icon: Bell, route: 'Reminders' },
@@ -64,17 +54,13 @@ const formatMemberSince = (date?: Date) => {
   }
 };
 
-// -------------------------------------------------------------
-// PANTALLA DE PERFIL
-// -------------------------------------------------------------
+// PROFILE SCREEN (DENTRO DE MAINLAYOUT)
 export function ProfileScreen({
   user,
   stats,
   onLogout,
   onNavigate,
 }: ProfileScreenProps) {
-  const insets = useSafeAreaInsets();
-
   const userData = user ?? {
     fullName: 'Usuario Anónimo',
     email: 'usuario@example.com',
@@ -90,15 +76,12 @@ export function ProfileScreen({
   const initials = getInitials(userData.fullName || '');
   const avatarURI = userData.avatarURL || '';
   const hasImage = !!avatarURI;
-  const activeRoute = 'Profile' as const;
 
   return (
-    <View
-      style={[
-        globalLayout.safeArea,
-        styles.mainContainer,
-        { paddingTop: 25 },
-      ]}
+    <MainLayout
+      headerTitle="Perfil"
+      activeRoute="Profile"
+      onNavigate={onNavigate}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -108,9 +91,8 @@ export function ProfileScreen({
         <View style={styles.profileHeader}>
           <Avatar style={{ width: 150, height: 150 }}>
             {hasImage ? (
-              <AvatarImage source={{ uri: avatarURI }}/>
+              <AvatarImage source={{ uri: avatarURI }} />
             ) : (
-              // AvatarFallback ya lo usas en otras cards con fullName
               <AvatarFallback fullName={userData.fullName || initials} />
             )}
           </Avatar>
@@ -121,7 +103,6 @@ export function ProfileScreen({
             {formatMemberSince(userData.createdAt)}
           </Text>
 
-          {/* Botón Editar Perfil */}
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => onNavigate('EditProfile')}
@@ -130,9 +111,8 @@ export function ProfileScreen({
           </TouchableOpacity>
         </View>
 
-        {/* --- 2. TARJETAS DE ESTADÍSTICAS --- */}
+        {/* --- 2. ESTADÍSTICAS --- */}
         <View style={styles.statsContainer}>
-          {/* Logros */}
           <View style={styles.statCard}>
             <View style={styles.statIconWrapper}>
               <Award size={24} color={COLORS.PRIMARY} />
@@ -143,10 +123,8 @@ export function ProfileScreen({
             <Text style={styles.statLabel}>Metas Cumplidas</Text>
           </View>
 
-          {/* Racha más larga */}
           <View style={styles.statCard}>
             <View style={styles.statIconWrapper}>
-              {/* Puedes poner otro ícono aquí si quieres, por ahora reutilizo Award */}
               <Award size={24} color={COLORS.TEXT_MUTED} />
             </View>
             <Text style={styles.statValue}>{userStats.longestStreak}</Text>
@@ -154,7 +132,7 @@ export function ProfileScreen({
           </View>
         </View>
 
-        {/* --- 3. MENÚ DE OPCIONES --- */}
+        {/* --- 3. MENÚ --- */}
         <View style={styles.menuContainer}>
           {OPTIONS_MENU.map((item, index) => {
             const Icon = item.icon;
@@ -174,7 +152,7 @@ export function ProfileScreen({
             );
           })}
 
-          {/* Cerrar sesión */}
+          {/* 🔴 CERRAR SESIÓN 🔴   */}
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutButton]}
             onPress={onLogout}
@@ -188,9 +166,7 @@ export function ProfileScreen({
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-     
-    </View>
+    </MainLayout>
   );
 }
 
@@ -198,10 +174,6 @@ export function ProfileScreen({
 // ESTILOS
 // -------------------------------------------------------------
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: COLORS.BACKGROUND_DEFAULT,
-  },
   scrollContent: {
     alignItems: 'center',
     paddingTop: 20,
@@ -209,16 +181,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
-  // --- Cabecera ---
+  // Header
   profileHeader: {
     alignItems: 'center',
     marginBottom: 30,
     width: '100%',
-  },
-  avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
   },
   userName: {
     fontSize: 20,
@@ -250,7 +217,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // --- Estadísticas ---
+  // Stats
   statsContainer: {
     flexDirection: 'row',
     width: '100%',
@@ -267,10 +234,6 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     marginHorizontal: 5,
-    shadowColor: COLORS.BLACK,
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   statIconWrapper: {
     marginBottom: 6,
@@ -291,11 +254,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // --- Menú ---
+  // Menu
   menuContainer: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: COLORS.BACKGROUND_DEFAULT,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.BORDER_COLOR,

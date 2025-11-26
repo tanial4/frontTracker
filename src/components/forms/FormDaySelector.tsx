@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Controller, useFormContext, FieldError } from 'react-hook-form';
 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
-import { formComponentStyles } from '../../styles/GlobalStyles';
 
 // Configuración estática de los días para iterar en la vista.
 // Se define fuera del componente para evitar recrearlo en cada render.

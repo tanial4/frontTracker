@@ -6,6 +6,7 @@ import Svg, { G, Circle, Text as SvgText } from 'react-native-svg';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
 export type GoalProgressItem = {
+  categoryId: any;
   id: string;
   label: string;      // Ej: "Pomodoro"
   percentage: number; // 0–100
