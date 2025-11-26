@@ -1,4 +1,3 @@
-// src/components/goals/GoalCheckinCard.tsx
 import React from 'react';
 import {
   View,
