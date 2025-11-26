@@ -3,9 +3,7 @@
 import React from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
+  Text,  SafeAreaView,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
@@ -20,17 +18,10 @@ import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
-
-<<<<<<< Updated upstream
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login } from '../services/authApi';
 
-// 🔹 Navigation
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../components/navigation/types';
-=======
 // Ajusta estos imports al nombre real de tu schema de login
->>>>>>> Stashed changes
 
 
 interface LoginScreenProps {
@@ -41,7 +32,6 @@ interface LoginScreenProps {
 
 export function LoginScreen({
   onLogin,
-  onDemoLogin,
   onSwitchToSignup,
 }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
@@ -60,53 +50,15 @@ export function LoginScreen({
     formState: { isSubmitting },
   } = methods;
 
-<<<<<<< Updated upstream
-  const [showPassword, setShowPassword] = useState(false);
-
-  const onSubmit = async (data: LoginFormType) => {
-    try {
-      console.log('Datos de inicio de sesión:', data);
-
-      // 🔐 Aquí iría tu llamada real a la API de autenticación
-      // await authService.login(data.email, data.password);
-      const res = await login(data.email, data.password);
-      await AsyncStorage.setItem('accessToken', res.accessToken);
-      await AsyncStorage.setItem('refreshToken', res.refreshToken);
-
-      // Simulación de delay (resolver sin argumentos para cumplir la firma esperada)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 1200));
-
-      console.log('Inicio de sesión simulado exitoso.');
-
-      //  Navegar al tab principal y limpiar historial
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
-    } catch (err) {
-      console.error('Error en login', err);
-      // Aquí podrías mostrar un toast o mensaje de error
-    }
-  };
-
-  const handleSwitchToSignup = () => {
-    navigation.navigate('Signup');
-  };
-
-  const handleForgotPassword = () => {
-    navigation.navigate('PasswordRecovery');
-  };
-
-  const handleDemoLogin = () => {
-    setValue('email', 'demo@example.com');
-    setValue('password', 'password-demo');
-    handleSubmit(onSubmit)();
-=======
-  const handleLoginSubmit = (data: LoginFormType) => {
+  const handleLoginSubmit =async (data: LoginFormType) => {
     console.log('Login data:', data);
     // Aquí luego harás tu llamada al backend
+
+    const res = await login(data.email, data.password);
+    await AsyncStorage.setItem('accessToken', res.accessToken);
+    await AsyncStorage.setItem('refreshToken', res.refreshToken);
+
     onLogin(); // RootNavigator se encarga de cambiar isAuthenticated
->>>>>>> Stashed changes
   };
 
   return (
@@ -174,20 +126,6 @@ export function LoginScreen({
                 </Text>
               </Text>
             </View>
-          </View>
-
-          {/* DEMO CARD */}
-          <View style={styles.demoCard}>
-            <Text style={styles.demoTitle}>
-              ¿Solo quieres probar la app?
-            </Text>
-
-            <Button
-              style={styles.demoButton}
-              onPress={onDemoLogin}
-            >
-              <Text style={styles.demoButtonText}>Entrar en modo demo</Text>
-            </Button>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

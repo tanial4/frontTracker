@@ -5,16 +5,22 @@ export interface LoginResponse {
   refreshToken: string;
 }
 
+export interface SignupPayload {
+  username: string;
+  email: string;
+  password: string;
+}
+
 export async function login(email: string, password: string) {
   const { data } = await api.post<LoginResponse>('/auth/login', {
     email,
-    password,
+    password
   });
   return data;
 }
 
 export async function signup(payload: {
-  name: string;
+  username: string;
   email: string;
   password: string;
 }) {

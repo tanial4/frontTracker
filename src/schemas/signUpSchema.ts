@@ -14,14 +14,9 @@ export const SignupSchema = z.object({
     .string().min(1, { message: 'Ingrese la contraseña' })
     .max(50, { message: 'La contraseña no puede exceder los 50 caracteres' }),
 
-    confirmPassword: z
-    .string().min(1, { message: 'Confirme la contraseña' })
-    .max(50, { message: 'La contraseña no puede exceder los 50 caracteres' }),
+    
 })
 
-    .refine((data) => data.password === data.confirmPassword, {
-      message: 'Las contraseñas no coinciden',
-      path: ['confirmPassword'],
-});
+  
 
 export type SignUpFormType = z.infer<typeof SignupSchema>;
