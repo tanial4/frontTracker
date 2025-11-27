@@ -233,7 +233,7 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
     if (stats) {
       if (stats.completion !== null && stats.completion !== undefined) {
         // el back ya calculó completion normalizado 0–1
-        percentage = stats.completion * 100;
+        percentage = Math.round(stats.completion * 100);
       } else if (stats.totalCheckins > 0) {
         // fallback: porcentaje de checkins marcados como "hechos"
         percentage = (stats.doneCount / stats.totalCheckins) * 100;
