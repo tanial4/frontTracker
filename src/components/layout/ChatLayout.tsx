@@ -1,5 +1,3 @@
-// src/components/layout/ChatLayout.tsx
-
 import React from 'react';
 import {
   View,
@@ -17,13 +15,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 interface ChatLayoutProps {
   title: string;
   avatarURL?: string | null;
-  headerSubtitle?: string; // ej: "En línea" o "Últ. vez hace 2h"
+  // Subtítulo opcional, por defecto muestra "En línea"
+  headerSubtitle?: string; 
+  // El contenido principal del chat (lista de mensajes, input, etc.)
   children: React.ReactNode;
 
   onBackPress: () => void;
-  onPressHeader?: () => void; // al tocar avatar + nombre
+  // Acción opcional al tocar la info del usuario (ej: ir al perfil)
+  onPressHeader?: () => void; 
 }
 
+// Layout envolvente para la pantalla de chat individual.
+// Maneja la barra superior (Header) fija con navegación y muestra el contenido debajo.
 export function ChatLayout({
   title,
   avatarURL,
@@ -32,24 +35,30 @@ export function ChatLayout({
   onBackPress,
   onPressHeader,
 }: ChatLayoutProps) {
+  
   const initials = getInitials(title);
 
   return (
     <View style={styles.screen}>
-      {/* HEADER */}
+      {/* HEADER: Barra superior fija */}
       <View style={styles.header}>
+        
+        {/* Botón de regreso */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={onBackPress}
+          // Aumentamos el área táctil para facilitar la navegación
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <ArrowLeft size={22} color={COLORS.TEXT_PRIMARY} />
         </TouchableOpacity>
 
+        {/* Sección central: Info del usuario (Clickable) */}
         <TouchableOpacity
           style={styles.headerCenter}
           activeOpacity={0.8}
           onPress={onPressHeader}
+          // Deshabilitamos el toque si no se pasó la función onPressHeader
           disabled={!onPressHeader}
         >
           <Avatar>
@@ -74,16 +83,17 @@ export function ChatLayout({
           </View>
         </TouchableOpacity>
 
-        {/* Espaciador lado derecho */}
+        {/* Espaciador vacío para equilibrar visualmente el botón de atrás y centrar el texto si fuera necesario */}
         <View style={styles.headerRightSpacer} />
       </View>
 
-      {/* CONTENIDO DEL CHAT */}
+      {/* CONTENIDO: Aquí se renderizan los mensajes */}
       <View style={styles.content}>{children}</View>
     </View>
   );
 }
 
+// Función auxiliar para extraer iniciales (ej: "Juan Perez" -> "JP")
 function getInitials(text: string): string {
   if (!text) return 'U';
   const parts = text.trim().split(/\s+/);
@@ -119,22 +129,18 @@ const styles = StyleSheet.create<Style>({
     paddingBottom: 10,
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
 
-    // ⭐ Sombra iOS
+    // Configuración de sombra para iOS
     shadowColor: COLORS.BLACK,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
 
-    // ⭐ Sombra Android
+    // Configuración de sombra para Android
     elevation: 5,
     
-
-    // ⭐ Para asegurarnos que quede "encima" del contenido
+    // Aseguramos que el encabezado flote sobre el contenido desplazable
     zIndex: 10,
-    },
-
-
-
+  },
   backButton: {
     padding: 4,
     marginRight: 4,
@@ -142,11 +148,11 @@ const styles = StyleSheet.create<Style>({
   headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flex: 1, // Ocupa el espacio disponible
   },
   headerTextWrapper: {
     marginLeft: 10,
-    flexShrink: 1,
+    flexShrink: 1, // Permite que el texto se corte si es muy largo
   },
   headerTitle: {
     fontSize: 16,
@@ -159,7 +165,7 @@ const styles = StyleSheet.create<Style>({
     marginTop: 2,
   },
   headerRightSpacer: {
-    width: 24,
+    width: 24, // Ancho similar al botón de atrás para balancear
   },
   content: {
     flex: 1,

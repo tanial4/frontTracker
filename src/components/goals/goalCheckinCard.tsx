@@ -1,3 +1,5 @@
+// src/components/streaks/StreakCard.tsx
+
 import React from 'react';
 import {
   View,
@@ -5,113 +7,109 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Clock } from 'lucide-react-native'; 
+import { Flame } from 'lucide-react-native'; 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Button } from '../ui/button';
+import { StreakUI } from '../../types/streak';
 
-// Propiedades para configurar la tarjeta de seguimiento.
-// Permite personalizar colores y datos para reutilizarla en diferentes contextos (Home, Listas, Detalles).
-interface GoalCheckinCardProps {
-  title: string;
-  description?: string;
-  
-  // Datos estadísticos opcionales
-  daysActive?: number;        // Racha o días acumulados
-  friendsCount?: number;      // Número de personas en el mismo reto
-  
-  // Estado visual
-  isActive?: boolean;         // Controla la visibilidad del badge "Activa"
-  accentColor?: string;       // Color temático de la categoría (se usa para bordes, iconos y botones)
-  
-  // Acción principal (usualmente navegar al detalle o marcar check-in)
-  onContinue: () => void;     
+
+interface StreakCardProps {
+  streak: StreakUI;
+  onContinue: (streakId: string) => void;
 }
 
-export function GoalCheckinCard({
-  title,
-  description,
-  daysActive,
-  friendsCount,
-  isActive = true,
-  accentColor = COLORS.PRIMARY,
-  onContinue,
-}: GoalCheckinCardProps) {
+export function StreakCard({ streak, onContinue }: StreakCardProps) {
+  const {
+    id,
+    name,
+    description,
+    categoryColor,
+    isJoined,
+    membersCount,
+    currentStreakDays,
+  } = streak;
+
+  const accent = categoryColor ?? COLORS.PRIMARY;
+
   return (
-    // El borde de la tarjeta toma el color de la categoría para diferenciar visualmente los tipos de metas.
-    <View style={[styles.card, { borderColor: accentColor }]}>
+    <View style={[styles.card, { borderColor: accent }]}>
       
-      {/* 1. Cabecera: Icono temático y Badge de estado */}
+      {/* --- HEADER --- */}
       <View style={styles.topRow}>
-        {/* Usamos una opacidad manual ('15') sobre el hex para el fondo del icono */}
-        <View style={[styles.iconWrapper, { backgroundColor: accentColor + '15' }]}>
-          <Clock size={22} color={accentColor} />
+        <View
+          style={[
+            styles.iconWrapper,
+            { backgroundColor: accent + '20' },
+          ]}
+        >
+          <Flame size={22} color={accent} />
         </View>
 
-        {isActive && (
-          <View style={[styles.statusPill, { backgroundColor: accentColor + '20' }]}>
-            <Text style={[styles.statusText, { color: accentColor }]}>
+        {isJoined && (
+          <View
+            style={[
+              styles.statusPill,
+              { backgroundColor: accent + '25' },
+            ]}
+          >
+            <Text style={[styles.statusText, { color: accent }]}>
               Activa
             </Text>
           </View>
         )}
       </View>
 
-      {/* 2. Contenido principal: Título y Descripción corta */}
-      <Text style={styles.title}>{title}</Text>
+      {/* --- NAME & DESCRIPTION --- */}
+      <Text style={styles.title}>{name}</Text>
+
       {!!description && (
         <Text style={styles.description} numberOfLines={2}>
           {description}
         </Text>
       )}
 
-      {/* 3. Métricas: Se renderizan solo si los datos numéricos existen */}
+      {/* --- METRICS --- */}
       <View style={styles.statsRow}>
-        {typeof daysActive === 'number' && (
-          <TouchableOpacity activeOpacity={0.8}>
-            <Text style={styles.highlightText}>{daysActive} días</Text>
-          </TouchableOpacity>
+        {typeof currentStreakDays === 'number' && (
+          <Text style={[styles.highlightText, { color: accent }]}>
+            {currentStreakDays} días
+          </Text>
         )}
 
-        {typeof friendsCount === 'number' && (
-          <View style={styles.friendsWrapper}>
-            {/* Nota: Aquí se usa un emoji literal, considerar cambiar por icono Lucide para consistencia visual */}
-            <Text style={styles.friendsIcon}>👥</Text>
-            <Text style={styles.friendsText}>
-              {friendsCount} amigos
-            </Text>
-          </View>
-        )}
+        <View style={styles.membersWrapper}>
+          <Text style={styles.membersIcon}>👥</Text>
+          <Text style={styles.membersText}>{membersCount} miembros</Text>
+        </View>
       </View>
 
-      {/* 4. Botón de Acción Principal */}
+      {/* --- BUTTON --- */}
       <Button
-        style={[styles.continueButton, { backgroundColor: accentColor }]}
-        onPress={onContinue}
+        style={[styles.goButton, { backgroundColor: accent }]}
+        onPress={() => onContinue(id)}
       >
-        <Text style={styles.continueText}>Continuar</Text>
+        <Text style={styles.goButtonText}>Ver racha</Text>
       </Button>
     </View>
   );
 }
 
 // -------------------------------------------------------------
-// ESTILOS
+// STYLES
 // -------------------------------------------------------------
-
 const styles = StyleSheet.create({
   card: {
     borderWidth: 2,
     borderRadius: 18,
-    padding: 14,
+    padding: 16,
+    marginBottom: 16,
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
-    marginBottom: 14,
-    // Sombras sutiles para dar profundidad (iOS y Android)
     shadowColor: COLORS.BLACK,
     shadowOpacity: 0.06,
     shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+
+  // Header
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -119,8 +117,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   iconWrapper: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -134,6 +132,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+
+  // Text
   title: {
     fontSize: 16,
     fontWeight: '700',
@@ -145,40 +145,42 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_MUTED,
     marginBottom: 10,
   },
+
+  // Metrics
   statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
+    alignItems: 'center',
   },
   highlightText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.PRIMARY,
   },
-  friendsWrapper: {
+  membersWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  friendsIcon: {
-    fontSize: 13,
+  membersIcon: {
+    fontSize: 14,
     marginRight: 4,
   },
-  friendsText: {
+  membersText: {
     fontSize: 13,
     color: COLORS.TEXT_MUTED,
   },
-  continueButton: {
-    marginTop: 4,
+
+  // Button
+  goButton: {
     borderRadius: 999,
     paddingVertical: 10,
   },
-  continueText: {
-    color: COLORS.BACKGROUND_DEFAULT,
-    fontWeight: '600',
-    fontSize: 14,
+  goButtonText: {
     textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.BACKGROUND_DEFAULT,
   },
 });
 
-export default GoalCheckinCard;
+export default StreakCard;

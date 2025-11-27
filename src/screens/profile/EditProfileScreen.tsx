@@ -30,6 +30,7 @@ interface EditProfileScreenProps {
 
 export function EditProfileScreen({ navigation }: EditProfileScreenProps) {
   const insets = useSafeAreaInsets();
+  const idUser = 'current-user-id'; // Aquí deberías obtener el ID del usuario actual
 
   const methods = useForm<ProfileFormType>({
     resolver: zodResolver(ProfileSchema),
@@ -38,7 +39,6 @@ export function EditProfileScreen({ navigation }: EditProfileScreenProps) {
       fullName: 'Usuario Demo',
       email: 'demo@ejemplo.com',
       bio: 'Apasionado por el desarrollo personal y la productividad. 🚀',
-      location: 'Madrid, España',
     },
     mode: 'onBlur',
   });
@@ -135,7 +135,6 @@ export function EditProfileScreen({ navigation }: EditProfileScreenProps) {
                 {currentBioLength}/{maxBioLength} caracteres
               </Text>
 
-              <FormInput name="location" label="Ubicación" />
             </View>
 
             {/* ACCIONES */}

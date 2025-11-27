@@ -31,10 +31,6 @@ export const ProfileSchema = z.object({
     bio: z
         .string()
         .max(150, { message: "La biografía no puede exceder los 150 caracteres" }).optional(),
-
-    location: z
-        .string()
-        .max(100, { message: "La ubicación no puede exceder los 100 caracteres" }).optional(),
 }); 
 
     

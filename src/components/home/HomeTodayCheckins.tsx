@@ -4,14 +4,21 @@ import SimpleCheckinButton from '../../components/goals/simpleCheckinCard';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
 interface Props {
-  visibleItems: any[]; // goalProgress items shown in chart and checkin
-  allGoals: any[]; // full goal objects to lookup details
+  // Items simplificados que se muestran en la gráfica circular
+  visibleItems: any[]; 
+  // Objetos completos de meta para buscar relaciones (categorías, descripciones, etc.)
+  allGoals: any[]; 
+  // Lista de categorías para resolver colores temáticos
   allCategories: any[];
-  allCheckins: any[]; // mock checkins
+  // Historial completo de registros (mocks o reales)
+  allCheckins: any[]; 
   currentUserId: string;
+  // Acción al pulsar el botón de check-in
   onCheckin: (goalId: string) => void;
 }
 
+// Sección de "Agenda Diaria" en el Home.
+// Muestra una lista plana de las metas seleccionadas con un botón de acción rápida para marcar el progreso del día.
 export default function HomeTodayCheckins({
   visibleItems,
   allGoals,
@@ -24,27 +31,36 @@ export default function HomeTodayCheckins({
     <View style={styles.todaySection}>
       <Text style={styles.todaySectionTitle}>Tus metas hoy</Text>
 
+      {/* Estado vacío: Si el usuario desmarcó todas las metas en el filtro */}
       {visibleItems.length === 0 ? (
         <Text style={styles.emptyText}>Selecciona metas para verlas aquí.</Text>
       ) : (
         visibleItems.map((goalItem) => {
+          
+          // 1. Lógica de Estado: Determinar si la meta ya se cumplió hoy.
+          // Filtramos el historial buscando registros de este usuario para esta meta específica.
           const goalCheckins = allCheckins.filter(
             (c) => c.goalId === goalItem.id && c.userId === currentUserId
           );
 
+          // Si existe algún registro con fecha válida (checkedAt), consideramos la meta como hecha.
           const doneToday = goalCheckins.some((c) => !!c.checkedAt);
 
+          // 2. Lógica de Diseño: Resolver el color de la categoría.
+          // Buscamos el objeto "Goal" completo y luego su categoría asociada.
           const goal = allGoals.find((g) => g.id === goalItem.id);
           const category = goal
             ? allCategories.find((c) => c.id === goal.category?.id)
             : undefined;
 
+          // Cadena de fallback para el color: Categoría -> Color del Item -> Color Primario por defecto
           const categoryColor = category?.color ?? goalItem.color ?? COLORS.PRIMARY;
 
           return (
             <View key={goalItem.id} style={styles.goalCheckinRow}>
               <Text style={styles.goalName}>{goalItem.label}</Text>
 
+              {/* Botón modular que maneja la interacción visual del check/uncheck */}
               <SimpleCheckinButton
                 hasCheckedInToday={doneToday}
                 categoryColor={categoryColor}
@@ -73,6 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
+    // Línea divisoria sutil entre filas
     borderBottomWidth: 1,
     borderColor: COLORS.BORDER_COLOR,
   },

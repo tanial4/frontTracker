@@ -8,31 +8,39 @@ import {
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
-import { BRAND_COLORS as COLORS } from '../../styles/Colors';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { MainLayout } from '../../components/layout/MainLayout';
 
 import { MOCK_USERS } from '../../data/TestUserData';
 import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from '../../data/TestGoalsData';
 import { MOCK_CATEGORIES } from '../../data/Categories';
 
-import CircularGoalsProgress from '../../components/stats/CircularGoalProgress';
 import { buildGoalProgressForUser } from '../../lib/goalProgress';
 import { buildWeekCheckinMapForGoal } from '../../lib/weekHelpers';
-import WeeklyCheckinsBar from '../../components/goals/WeeklyCheckinsBar';
-import GoalSelectionList from '../../components/goals/GoalSelectionList';
 import { Button } from '../../components/ui/button';
 import GoalsStreaksSegmentBar from '../../components/goals/goalsStreakSegmentBar';
+import { MOCK_STREAKS_UI } from '../../data/TestStreakData';
+import StatsGoalsSection from '../../components/stats/StatsGoalsSection';
+import StatsStreaksSection from '../../components/stats/StatsStreaksSection';
 
-
+// 👇 importa el tipo del stack de Stats
+import { StatsStackParamList } from '../../components/navigation/StatsStack';
 
 const CURRENT_USER_ID = MOCK_USERS[0].id;
 const MAX_SELECTED = 6;
 
 type SegmentKey = 'goals' | 'streaks';
 
+// navegación tipada para esta pantalla dentro del stack
+type StatsScreenNavProp = NativeStackNavigationProp<
+  StatsStackParamList,
+  'StatsMain'
+>;
+
 export function StatsScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<StatsScreenNavProp>();
 
   // Progreso general de las metas
   const goalProgressItems = useMemo(
@@ -46,7 +54,6 @@ export function StatsScreen() {
     []
   );
 
-  // Segmento activo: goals | streaks
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('goals');
 
   // ids seleccionados para la gráfica
@@ -75,138 +82,45 @@ export function StatsScreen() {
     });
   };
 
-  // Metas visibles por selección (máximo 6)
   const visibleGoals = goalProgressItems.filter((g) =>
     selectedGoalIds.includes(g.id)
   );
 
+  // Streaks UI data
+  const streakItems = MOCK_STREAKS_UI;
+  const hasStreaks = streakItems.length > 0;
+
   return (
-    <MainLayout
-      headerTitle="Estadísticas"
-      activeRoute="Stats"
-      onNavigate={(route) => navigation.navigate(route)}
-    >
-      {/* 🔹 Barra Goals / Streaks arriba del contenido */}
+    <MainLayout headerTitle="Estadísticas" activeRoute="Stats" onNavigate={(route) => navigation.navigate(route as any)}>
       <View style={styles.segmentWrapper}>
-        <GoalsStreaksSegmentBar
-          activeSegment={activeSegment}
-          onChange={setActiveSegment}
-          goalsCount={goalProgressItems.length}
-          streaksCount={0} // Aquí puedes poner la cantidad de rachas si la tienes disponible
-        />
+        <GoalsStreaksSegmentBar activeSegment={activeSegment} onChange={setActiveSegment} goalsCount={goalProgressItems.length} streaksCount={streakItems.length} />
       </View>
 
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 🔹 Si está en pestaña GOALS, mostramos lo de metas */}
+      <ScrollView style={styles.screen} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {activeSegment === 'goals' ? (
           !hasGoals ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>Aún no tienes metas</Text>
-              <Text style={styles.emptySubtitle}>
-                Crea tu primera meta para empezar a trackear tu progreso diario.
-              </Text>
+              <Text style={styles.emptySubtitle}>Crea tu primera meta para empezar a trackear tu progreso diario.</Text>
 
-              <Button
-                style={styles.createGoalButton}
-                onPress={() => navigation.navigate('CreateGoal')}
-              >
-                Crear nueva meta
-              </Button>
+              <Button style={styles.createGoalButton} onPress={() => navigation.navigate('CreateGoal' as any)}>Crear nueva meta</Button>
             </View>
           ) : (
-            <>
-              {/* Gráfica circular de progreso general */}
-              <View style={styles.chartWrapper}>
-                <CircularGoalsProgress goals={visibleGoals} />
-              </View>
-
-              {/* Selector de metas (máximo 6) */}
-              <GoalSelectionList
-                items={goalProgressItems}
-                selectedIds={selectedGoalIds}
-                onToggle={handleToggleGoal}
-                maxSelected={MAX_SELECTED}
-              />
-
-              {/* Sección de check-ins semanales por meta */}
-              <View style={styles.weekSection}>
-                <Text style={styles.weekSectionTitle}>
-                  Check-ins de esta semana
-                </Text>
-
-                {visibleGoals.length === 0 && (
-                  <Text style={styles.emptyText}>
-                    Selecciona al menos una meta para ver sus check-ins.
-                  </Text>
-                )}
-
-                {visibleGoals.map((goalItem) => {
-                  const weekMap = buildWeekCheckinMapForGoal(
-                    goalItem.id,
-                    MOCK_GOAL_CHECKINS
-                  );
-
-                  const goal = MOCK_GOALS.find((g) => g.id === goalItem.id);
-                  const category = goal
-                    ? MOCK_CATEGORIES.find((c) => c.id === goal.category?.id)
-                    : undefined;
-
-                  const categoryColor =
-                    category?.color ?? goalItem.color ?? COLORS.PRIMARY;
-
-                  return (
-                    <View key={goalItem.id} style={styles.goalWeekCard}>
-                      <View style={styles.goalHeaderRow}>
-                        <View style={styles.goalColorDotWrapper}>
-                          <View
-                            style={[
-                              styles.goalColorDot,
-                              { backgroundColor: categoryColor },
-                            ]}
-                          />
-                        </View>
-
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.goalTitle}>
-                            {goal?.title ?? goalItem.label}
-                          </Text>
-                        </View>
-
-                        <Text style={styles.goalPercentage}>
-                          {goalItem.percentage}%
-                        </Text>
-                      </View>
-
-                      <WeeklyCheckinsBar
-                        weekMap={weekMap}
-                        categoryColor={categoryColor}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
-
-              <Button
-                style={styles.createGoalButton}
-                onPress={() => navigation.navigate('CreateGoal')}
-              >
-                Crear nueva meta
-              </Button>
-            </>
+            <StatsGoalsSection
+              allItems={goalProgressItems}
+              visibleItems={visibleGoals}
+              selectedIds={selectedGoalIds}
+              onToggle={handleToggleGoal}
+              maxSelected={MAX_SELECTED}
+              onCreate={() => (navigation as any).navigate('CreateGoal')}
+              allGoals={MOCK_GOALS}
+              allCheckins={MOCK_GOAL_CHECKINS}
+              allCategories={MOCK_CATEGORIES}
+              buildWeekMap={buildWeekCheckinMapForGoal}
+            />
           )
         ) : (
-          // 🔹 Pestaña STREAKS (de momento placeholder / luego metes tu data real)
-          <View style={styles.streaksPlaceholder}>
-            <Text style={styles.streaksTitle}>Rachas</Text>
-            <Text style={styles.streaksSubtitle}>
-              Aquí vas a ver estadísticas y rankings de tus rachas cuando
-              tengamos data de streaks conectada.
-            </Text>
-          </View>
+          <StatsStreaksSection streakItems={streakItems} onContinue={(id) => navigation.navigate('StreakDetail' as any, { streakId: id })} />
         )}
       </ScrollView>
     </MainLayout>
@@ -306,22 +220,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // STREAKS placeholder
-  streaksPlaceholder: {
-    marginTop: 40,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
+  // Streaks
   streaksTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: COLORS.TEXT_PRIMARY,
-    marginBottom: 8,
-  },
-  streaksSubtitle: {
-    fontSize: 14,
-    color: COLORS.TEXT_MUTED,
-    textAlign: 'center',
+    marginBottom: 12,
   },
 });
 

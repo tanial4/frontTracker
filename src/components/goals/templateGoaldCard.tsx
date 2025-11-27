@@ -22,9 +22,9 @@ import {
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { ActivityCategory, GoalTemplate } from '../../types/goal';
 
-// Mapeo estático de Strings -> Componentes.
-// Esto permite que la base de datos guarde solo el nombre del icono ("Heart")
-// y el frontend decida qué componente renderizar.
+// Mapeo estático de nombres de iconos (Strings) a Componentes React.
+// Esto permite almacenar referencias simples en la base de datos (ej: "Heart") 
+// y renderizar el componente correspondiente en tiempo de ejecución.
 const IconMap: Record<string, LucideIcon> = {
   Clock,
   Heart,
@@ -41,14 +41,14 @@ const IconMap: Record<string, LucideIcon> = {
 interface TemplateCardProps {
   template: GoalTemplate;
   onSelect?: (templateId: string) => void;
-  // Determina si esta tarjeta está seleccionada actualmente (cambia el estilo visual)
+  // Propiedad de estado: Controla si la tarjeta está seleccionada visualmente
   isActive: boolean;
-  // Pasamos todas las categorías para poder buscar el color e icono correcto
+  // Necesitamos las categorías para resolver el color y el icono de la plantilla
   allCategories: ActivityCategory[];
 }
 
-// Tarjeta seleccionable que muestra una "Plantilla de Meta".
-// Diseñada para mostrarse en una grilla (width ~46%).
+// Tarjeta de selección para "Plantillas de Metas".
+// Diseñada para grillas (ej: 2 columnas), muestra una previsualización de la meta sugerida.
 export function TemplateCard({
   template,
   onSelect,
@@ -56,11 +56,10 @@ export function TemplateCard({
   allCategories,
 }: TemplateCardProps) {
   
-  // 1. Resolución de datos visuales
-  // Buscamos la categoría asociada a esta plantilla para heredar su color e icono.
+  // 1. Resolución de metadatos visuales
   const category = allCategories.find((cat) => cat.id === template.categoryId);
 
-  // Fallbacks seguros por si la categoría fue borrada o no tiene datos
+  // Valores por defecto (Fallback) para evitar errores si la categoría fue eliminada
   const color = category?.color || COLORS.PRIMARY;
   const iconName = category?.iconName || 'Target';
   const IconComponent = IconMap[iconName] || IconMap.Target;
@@ -74,30 +73,30 @@ export function TemplateCard({
       style={[
         styles.card,
         {
-          // Lógica de estado activo:
-          // Si está activa, el borde y el fondo toman el color de la categoría.
-          // Si no, se ve como una tarjeta gris estándar.
-          borderColor: isActive ? color : COLORS.BORDER_COLOR,
-          borderLeftColor: color, // La barra lateral de color siempre se muestra
+          // Lógica de estilos dinámicos según el estado de selección (isActive):
           
-          // Fondo con opacidad muy baja (12 hex) para dar un tinte sutil del color temático
+          // 1. Bordes: Se colorea si está activo para resaltar.
+          borderColor: isActive ? color : COLORS.BORDER_COLOR,
+          borderLeftColor: color, // El borde izquierdo siempre mantiene el color de identidad
+          
+          // 2. Fondo: Usamos una opacidad baja (hex + '12') para teñir el fondo sutilmente
           backgroundColor: isActive
             ? color + '12' 
             : COLORS.BACKGROUND_SECONDARY,
             
-          // Elevación sutil para destacar la selección
+          // 3. Profundidad: Elevamos la tarjeta si está seleccionada
           shadowOpacity: isActive ? 0.12 : 0.06,
           elevation: isActive ? 3 : 1,
         },
       ]}
     >
-      {/* Sección Superior: Icono y Título */}
+      {/* Cabecera: Icono y Título */}
       <View style={styles.headerRow}>
         <View
           style={[
             styles.iconWrapper,
             {
-              // El contenedor del icono usa el color temático con transparencias
+              // El contenedor del icono usa transparencias del color principal
               borderColor: color + '80',
               backgroundColor: color + '18',
             },
@@ -111,7 +110,7 @@ export function TemplateCard({
             {template.title}
           </Text>
 
-          {/* Pill pequeña con el nombre de la categoría */}
+          {/* Etiqueta pequeña con el nombre de la categoría */}
           {category?.name && (
             <View style={styles.categoryPill}>
               <View
@@ -128,13 +127,13 @@ export function TemplateCard({
         </View>
       </View>
 
-      {/* Cuerpo: Descripción de la plantilla */}
+      {/* Descripción de la plantilla */}
       <Text style={styles.descriptionText} numberOfLines={3}>
         {template.description ||
           `Meta de tipo ${badgeText.toLowerCase()} para comenzar rápido.`}
       </Text>
 
-      {/* Pie: Badge con el tipo de frecuencia (DAILY, WEEKLY, etc) */}
+      {/* Pie de tarjeta: Tipo de frecuencia (Diaria/Semanal) */}
       <View style={styles.footerRow}>
         <View
           style={[
@@ -155,7 +154,7 @@ export function TemplateCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: '46%', // Ajustado para grid de 2 columnas con márgenes
+    width: '46%', // Ancho calculado para caber 2 en una fila con márgenes
     minHeight: 150,
     borderWidth: 1.5,
     borderRadius: 14,
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     margin: 4,
     justifyContent: 'space-between',
-    // Borde izquierdo más grueso para acento de color tipo "tarjeta de tarea"
+    // Borde izquierdo grueso para identificación rápida visual
     borderLeftWidth: 5,
     shadowColor: COLORS.BLACK,
     shadowRadius: 4,
@@ -193,7 +192,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
   },
 
-  // Estilos del indicador de categoría (Pill)
+  // Estilos para la etiqueta de categoría (Pill)
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',

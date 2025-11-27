@@ -1,21 +1,23 @@
-// src/navigation/stacks/RankingStack.tsx
-
+// src/components/navigation/RankingsStack.tsx
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+
+import PublicProfileScreen from '../../screens/profile/PublicProfileScreen';
 import RankingsScreen from '../../screens/rankings/RankingScreen';
 
+export type RankingsStackParamList = {
+  RankingsHome: undefined;
+  PublicProfile: { userId: string };
+};
 
+const Stack = createNativeStackNavigator<RankingsStackParamList>();
 
-const Stack = createNativeStackNavigator();
-
-export default function RankingStackNavigator() {
+export default function RankingsStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Pantalla principal de rankings */}
-      <Stack.Screen name="RankingsMain" component={RankingsScreen} />
-
-      {/* Pantalla de detalles por categoría, meta o usuario */}
-      {/* <Stack.Screen name="RankingDetails" component={RankingDetailsScreen} /> */}
+      <Stack.Screen name="RankingsHome" component={RankingsScreen} />
+      <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
     </Stack.Navigator>
   );
 }

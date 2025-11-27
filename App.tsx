@@ -33,6 +33,7 @@ import { MOCK_USERS, MOCK_PROFILES } from './src/data/TestUserData';
 import { RootTabParamList } from './src/components/navigation/types';
 import RankingsScreen from './src/screens/rankings/RankingScreen';
 import ProfileStackNavigator from './src/components/navigation/ProfileStack';
+import StatsStackNavigator from './src/components/navigation/StatsStack';
 
 // ------------------------
 // Auth Stack
@@ -111,11 +112,12 @@ function AppTabs({
 
       <Tab.Screen
         name="Stats"
-        component={StatsScreen}
+        component={StatsStackNavigator}
         options={{
           title: 'Stats',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <BarChart2 size={size} color={color} />
+            <BarChart2 color={color} size={size} />
           ),
         }}
       />

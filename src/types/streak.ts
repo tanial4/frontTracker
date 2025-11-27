@@ -36,6 +36,17 @@ export interface Streak {
   deletedAt?: string | null;
 }
 
+export interface StreakUI {
+  id: string;
+  name: string;
+  description?: string | null;
+
+  categoryColor: string;     // 🔵 se obtiene desde categoría real
+  isJoined: boolean;         // 🔵 si el usuario está en la racha
+  membersCount: number;      // 🔵 count de streakMembers
+  currentStreakDays: number; // 🔵 días consecutivos
+}
+
 export interface StreakMembership {
   id: string;
   streakId: string;
