@@ -18,11 +18,8 @@ import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
-<<<<<<< HEAD
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login } from '../services/authApi';
-=======
->>>>>>> 41fafb75eae67febecb943a0442923b520783de8
 
 // Ajusta estos imports al nombre real de tu schema de login
 
@@ -53,11 +50,7 @@ export function LoginScreen({
     formState: { isSubmitting },
   } = methods;
 
-<<<<<<< HEAD
   const handleLoginSubmit =async (data: LoginFormType) => {
-=======
-  const handleLoginSubmit = (data: LoginFormType) => {
->>>>>>> 41fafb75eae67febecb943a0442923b520783de8
     console.log('Login data:', data);
     // Aquí luego harás tu llamada al backend
 

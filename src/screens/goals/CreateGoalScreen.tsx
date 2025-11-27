@@ -24,7 +24,8 @@ import { MOCK_CATEGORIES } from '../../data/Categories';
 import { GOAL_TEMPLATES } from '../../data/GoalsTypes';
 import { ActivityCategory, GoalTemplate } from '../../types/goal';
 import { TemplateCard } from '../../components/goals/templateGoaldCard';
-import { RootTabParamList, RouteStackHomeParamList } from '../../components/navigation/types';
+import {  RouteStackHomeParamList } from '../../components/navigation/types';
+import { createGoal } from '../../services/goalsApi';
 
 type HomeNavProp = BottomTabNavigationProp<RouteStackHomeParamList, 'HomeMain'>;
 
@@ -43,13 +44,13 @@ export function CreateGoalScreen({
     GoalTemplate | undefined
   >(undefined);
 
-  // RHF configurado para que isValid se actualice en tiempo real
+  
   const methods = useForm<GoalFormType>({
     resolver: zodResolver(GoalSchema),
     mode: 'onChange',
     reValidateMode: 'onChange',
     defaultValues: {
-      name: '',
+      title: '',
       description: '',
       categoryId: '',
       targetType: 'DAILY',
@@ -74,14 +75,47 @@ export function CreateGoalScreen({
     }
   };
 
-  // ✅ Cuando se crea la meta
-  const handleGoalCreatedInternal = (data: GoalFormType) => {
-    if (onGoalCreated) {
-      onGoalCreated(data);
+
+  const handleGoalCreatedInternal = async (data: GoalFormType) => {
+    try {
+      // 1. Log rápido para ver qué viene del form
+      console.log('Goal form data:', data);
+
+      // 2. Mapear GoalFormType -> CreateGoalPayload (backend)
+      const payload = {
+        title: data.title,                          
+        description: data.description || undefined,
+        categoryId: data.categoryId || null,       // '' -> null
+        targetType: data.targetType,               
+        
+        targetValue: data.targetValue ?? null,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate ? data.endDate.toISOString() : null,
+        isArchived: false,
+      } as const;
+
+      console.log('Payload enviado a /goals:', payload);
+
+      // Llamar al backend
+      const created = await createGoal(payload);
+      console.log('Goal creada en backend:', created);
+
+      
+      if (onGoalCreated) {
+        onGoalCreated(data);
+      }
+
+      // Navegar de regreso a Home
+      navigation.navigate('HomeMain');
+    } catch (error: any) {
+      console.error(
+        'Error creando meta:',
+        error?.response?.data || error.message || error,
+      );
+      
     }
-    // Después de crear, manda a Home
-    navigation.navigate('HomeMain');
   };
+
 
   return (
     <InnerScreenLayout
