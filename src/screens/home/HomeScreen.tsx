@@ -13,7 +13,6 @@ import { RootTabParamList } from '../../components/navigation/types';
 
 import { MainLayout } from '../../components/layout/MainLayout';
 
-import { MOCK_USERS } from '../../data/TestUserData';
 import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from '../../data/TestGoalsData';
 import { MOCK_CATEGORIES } from '../../data/Categories';
 
@@ -23,31 +22,86 @@ import HomeTodayCheckins from '../../components/home/HomeTodayCheckins';
 import { Button } from '../../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
+// 👇 importa tu servicio de auth
+import { getMe, PublicUser } from '../../services/authApi'; // ajusta la ruta real
+import { listGoals,GoalResponse } from '../../services/goalsApi';
+
+type FrontGoal = (typeof MOCK_GOALS)[number]
 
 type HomeNavProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
 
-const CURRENT_USER_ID = MOCK_USERS[0].id;
 const MAX_SELECTED = 6;
 
 export function HomeScreen() {
   const navigation = useNavigation<HomeNavProp>();
 
-  // Progreso general de las metas
-  const goalProgressItems = useMemo(
-    () =>
-      buildGoalProgressForUser(
-        CURRENT_USER_ID,
-        MOCK_GOALS,
-        MOCK_GOAL_CHECKINS,
-        MOCK_CATEGORIES
-      ),
-    []
-  );
-
-  // ids seleccionados para la gráfica
+  const [currentUser, setCurrentUser] = useState<PublicUser | null>(null);
   const [selectedGoalIds, setSelectedGoalIds] = useState<string[]>([]);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [realGoals, setRealGoals] = useState<GoalResponse[]>([]);
 
-  // Inicializar selección con las primeras 6 metas disponibles
+  // 1) Obtener /auth/me al montar
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const user = await getMe();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error al obtener /auth/me', error);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchMe();
+  }, []);
+
+    useEffect(() => {
+    if (!currentUser) return; // todavía no sabemos quién es
+
+    const fetchGoals = async () => {
+      try {
+        const goals = await listGoals(); // llama GET /goals
+        setRealGoals(goals);
+        console.log('Metas desde backend:', goals);
+      } catch (error) {
+        console.error('Error al obtener /goals', error);
+      }
+    };
+
+    fetchGoals();
+  }, [currentUser]);
+
+  const goalsForProgress = useMemo<FrontGoal[]>(() => {
+  if (!currentUser) return [];
+
+  return realGoals.map((g) => {
+    return {
+      ...(g as any),
+      startDate:new Date(g.startDate),
+      endDate:g.endDate?new Date(g.endDate):null,
+      // buildGoalProgressForUser necesita esto
+      user: {
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.username,
+      } as any,
+    } as FrontGoal;
+  });
+}, [realGoals, currentUser]);
+
+  // 2) Construir progreso de metas SOLO cuando ya tengamos usuario
+  const goalProgressItems = useMemo(() => {
+    if (!currentUser) return [];
+    return buildGoalProgressForUser(
+      currentUser.id,       // 👈 equivalente a CURRENT_USER_ID
+      goalsForProgress,
+      MOCK_GOAL_CHECKINS,
+      MOCK_CATEGORIES
+    );
+  }, [currentUser,goalsForProgress]);
+
+  // 3) Inicializar selección con las primeras metas
   useEffect(() => {
     if (goalProgressItems.length > 0 && selectedGoalIds.length === 0) {
       setSelectedGoalIds(
@@ -74,10 +128,24 @@ export function HomeScreen() {
     (navigation as any).navigate('CreateGoalScreen');
   };
 
-  // Metas visibles en el gráfico (máx 6) — la misma lista será usada para los checkins
   const visibleGoals = goalProgressItems.filter((g) =>
     selectedGoalIds.includes(g.id)
   );
+
+  // 4) Mientras carga el usuario, algo simple
+  if (loadingUser) {
+    return (
+      <MainLayout
+        headerTitle="Inicio"
+        activeRoute="Home"
+        onNavigate={(route) => navigation.navigate(route)}
+      >
+        <View style={styles.loadingContainer}>
+          <Text style={styles.emptySubtitle}>Cargando tu información...</Text>
+        </View>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout
@@ -91,7 +159,6 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {!hasGoals ? (
-          // 🔹 Estado vacío cuando no hay metas
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>Aún no tienes metas</Text>
             <Text style={styles.emptySubtitle}>
@@ -105,12 +172,13 @@ export function HomeScreen() {
               Crear nueva meta
             </Button>
           </View>
+          
         ) : (
           <>
             <HomeGoalsSection
               allItems={goalProgressItems}
               visibleItems={visibleGoals}
-              selectedIds={selectedGoalIds} 
+              selectedIds={selectedGoalIds}
               onToggle={handleToggleGoal}
               maxSelected={MAX_SELECTED}
               onCreate={handleGoToCreateGoal}
@@ -121,14 +189,14 @@ export function HomeScreen() {
               allGoals={MOCK_GOALS}
               allCategories={MOCK_CATEGORIES}
               allCheckins={MOCK_GOAL_CHECKINS}
-              currentUserId={CURRENT_USER_ID}
+              currentUserId={currentUser?.id ?? ''} // por ahora
               onCheckin={(goalId) => {
-                // placeholder: later call backend / mutation
                 console.log('Check-in realizado para meta:', goalId);
               }}
             />
           </>
         )}
+
       </ScrollView>
     </MainLayout>
   );
@@ -147,8 +215,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-
-  // Empty state
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -173,8 +239,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignSelf: 'center',
   },
-
-  // Sección "Tus metas hoy"
   todaySection: {
     marginTop: 16,
   },
@@ -197,12 +261,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: COLORS.TEXT_PRIMARY,
   },
-
   emptyText: {
     marginTop: 4,
     fontSize: 13,
     color: COLORS.TEXT_MUTED,
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    flex: 1,
+    paddingTop: 60,
+    alignItems: 'center',
   },
 });
 

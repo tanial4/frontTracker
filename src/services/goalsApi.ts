@@ -30,18 +30,18 @@ export async function createGoal(payload: CreateGoalPayload) {
 
 // Listar metas
 export async function listGoals(params?: { archived?: boolean; q?: string }) {
-  const { data } = await api.get<GoalResponse[]>('/goals', {
-    params: {
-      archived: params?.archived,
-      q: params?.q,
+  const { data } = await api.get<GoalResponse[]>('/goals', { 
+  params: {
+    archived: params?.archived,
+    q: params?.q,
     },
   });
   return data;
 }
 
 // Obtener una meta
-export async function getGoal(id: string) {
-  const { data } = await api.get<GoalResponse>(`/goals/${id}`);
+export async function getMyGoals() {
+  const { data } = await api.get<GoalResponse[]>('/goals');
   return data;
 }
 

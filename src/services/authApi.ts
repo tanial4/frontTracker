@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './apiClient';
 
 export interface LoginResponse {
@@ -11,11 +12,27 @@ export interface SignupPayload {
   password: string;
 }
 
+export interface PublicUser {
+  id: string;
+  email: string;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function login(email: string, password: string) {
   const res: any = await api.post('/auth/login', {
     email,
     password
   });
+
+   const { accessToken, refreshToken, user } = res.data;
+
+  await AsyncStorage.multiSet([
+    ['accessToken', accessToken],
+    ['refreshToken', refreshToken],
+    ['currentUser', JSON.stringify(user)],
+  ]);
   return res.data as LoginResponse;
 }
 
