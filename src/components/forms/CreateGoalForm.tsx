@@ -1,3 +1,4 @@
+// src/components/forms/CreateGoalForm.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { UseFormReturn } from 'react-hook-form';
@@ -7,44 +8,42 @@ import { FormInput } from './formInput';
 import { FormSelect } from './FormSelect';
 import { Button } from '../ui/button';
 import { GoalFormType } from '../../schemas/createGoalSchema';
-import { GoalTemplate } from '../../types/goal';
+import { GoalTemplate, ActivityCategory } from '../../types/goal';
 import { TARGET_TYPE_OPTIONS } from '../../data/Options';
-import { CATEGORIES } from '../../data/Categories';
 import { FormDate } from './FormDate';
+import { CATEGORIES } from '../../data/Categories';
 
-// Función auxiliar para calcular los valores iniciales.
-// Si recibimos una plantilla (template), pre-llenamos los campos para agilizar la creación.
-// Si no, devolvemos valores por defecto limpios.
+// Función auxiliar para calcular los valores iniciales
 const getFormDefaults = (template?: GoalTemplate): GoalFormType => {
   return {
     title: template?.title || '',
     description: template?.description || '',
     categoryId: template?.categoryId || '',
-    // Aseguramos que el tipo de objetivo sea válido según nuestras opciones de UI
     targetType:
       template && (template.targetType === 'WEEKLY' || template.targetType === 'DAILY')
         ? (template.targetType as any)
         : 'DAILY',
     startDate: new Date(),
     endDate: new Date(),
+    // si tu GoalFormType tiene targetValue, lo dejamos caer aquí:
+    // targetValue: template?.targetValue ?? null,
   };
 };
- 
+
 interface CreateGoalFormProps {
   onCancel: () => void;
-  // Pasamos todos los métodos del hook useForm desde el componente padre
   methods: UseFormReturn<GoalFormType>;
-  allCategories: any[];
+  allCategories: ActivityCategory[];
   initialTemplate?: GoalTemplate;
   onCreate: (data: GoalFormType) => void;
 }
 
 export function CreateGoalForm({
   onCancel,
-
   initialTemplate,
   methods,
   onCreate,
+  allCategories,
 }: CreateGoalFormProps) {
   const {
     handleSubmit,
@@ -53,15 +52,11 @@ export function CreateGoalForm({
     formState: { isValid, isSubmitting },
   } = methods;
 
-  // Estado local para manejar visualmente el toggle de tipo de meta (Diaria vs Semanal).
-  // Lo separamos del estado del formulario para tener control inmediato sobre la UI
-  // y luego sincronizamos.
   const [uiGoalType, setUiGoalType] = useState<'DAILY' | 'WEEKLY'>(
     initialTemplate?.targetType === 'WEEKLY' ? 'WEEKLY' : 'DAILY'
   );
 
-  // Efecto: Cuando cambia la plantilla seleccionada (o se limpia)
-  // reseteamos el formulario completo con los nuevos valores por defecto.
+  // Cuando cambia la plantilla, reseteamos el form con sus valores
   useEffect(() => {
     const defaults = getFormDefaults(initialTemplate);
     reset(defaults);
@@ -70,13 +65,10 @@ export function CreateGoalForm({
       initialTemplate?.targetType === 'WEEKLY' ? 'WEEKLY' : 'DAILY';
 
     setUiGoalType(newUiType);
-    // Forzamos la validación inmediata al setear el valor
     setValue('targetType', newUiType, { shouldValidate: true });
   }, [initialTemplate, reset, setValue]);
 
-  // Efecto: Sincronización manual.
-  // Cada vez que el usuario toca el botón de tipo de meta (uiGoalType),
-  // actualizamos el valor real en React Hook Form.
+  // Sincronizar el toggle de UI con RHF
   useEffect(() => {
     setValue('targetType', uiGoalType, { shouldValidate: true });
   }, [uiGoalType, setValue]);
@@ -84,37 +76,24 @@ export function CreateGoalForm({
   const isDisabled = !isValid || isSubmitting;
 
   const onSubmit = (data: GoalFormType) => {
-    // Lógica de mapeo para el backend.
-    // El backend distingue entre 'DAILY' y 'COUNT' (para metas numéricas/semanales),
-    // mientras que en la UI lo mostramos como 'Semanal'.
-    type BackendTargetType = 'DAILY' | 'COUNT';
-
-    const targetTypeBE: BackendTargetType =
-      uiGoalType === 'DAILY' ? 'DAILY' : 'COUNT';
-
-    const finalPayload: GoalFormType = {
-      ...data,
-      targetType: targetTypeBE,
-    };
-
-    console.log('[CreateGoalForm] Enviando payload:', finalPayload);
-    onCreate(finalPayload);
+    // Si quieres mapear a otro enum para backend, lo haces fuera (en CreateGoalScreen)
+    console.log('[CreateGoalForm] Enviando payload:', data);
+    onCreate(data);
   };
 
   return (
     <ScrollView
       style={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
-      // Permite cerrar el teclado si se toca fuera de un input
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
         <Text style={styles.headerTitle}>Meta personalizada</Text>
 
-        {/* Sección 1: Información básica */}
+        {/* Nombre de la meta (AHORA title) */}
         <FormInput
-          name="name"
-          label="Nombre de la racha *"
+          name="title"
+          label="Nombre de la meta *"
           placeholder="Ej: Correr 5km diarios"
         />
 
@@ -127,7 +106,7 @@ export function CreateGoalForm({
           customInputStyle={styles.descriptionInput}
         />
 
-        {/* Sección 2: Categorización */}
+        {/* Categoría */}
         <FormSelect
           name="categoryId"
           label="Categoría *"
@@ -135,7 +114,7 @@ export function CreateGoalForm({
           options={CATEGORIES}
         />
 
-        {/* Sección 3: Selector de frecuencia (Toggle tipo tarjeta) */}
+        {/* Tipo de meta (Diaria / Semanal) */}
         <Text style={styles.sectionLabel}>Tipo de meta *</Text>
         <View style={styles.goalTypeGroup}>
           {TARGET_TYPE_OPTIONS.map((option) => {
@@ -165,7 +144,7 @@ export function CreateGoalForm({
           })}
         </View>
 
-        {/* Sección 4: Definición de fechas */}
+        {/* Fechas */}
         <View style={styles.dateGroup}>
           <View style={styles.datePickerWrapper}>
             <FormDate
@@ -186,7 +165,7 @@ export function CreateGoalForm({
           </View>
         </View>
 
-        {/* Sección 5: Acciones del formulario */}
+        {/* Botones */}
         <View style={styles.buttonRow}>
           <Button
             onPress={onCancel}
@@ -232,7 +211,7 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     minHeight: 100,
-    textAlignVertical: 'top', // Alinea el texto arriba en Android
+    textAlignVertical: 'top',
     paddingVertical: 10,
   },
   sectionLabel: {
@@ -241,8 +220,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: 'bold',
   },
-
-  // Agrupación de fechas en fila
   dateGroup: {
     flexDirection: 'row',
     gap: 15,
@@ -252,8 +229,6 @@ const styles = StyleSheet.create({
   datePickerWrapper: {
     flex: 1,
   },
-
-  // Estilos para el selector tipo tarjeta
   goalTypeGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -284,8 +259,6 @@ const styles = StyleSheet.create({
   goalTypeLabelActive: {
     color: COLORS.BACKGROUND_DEFAULT,
   },
-
-  // Botones inferiores
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

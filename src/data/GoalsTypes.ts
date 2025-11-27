@@ -8,7 +8,6 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
     description: 'Completa 4 sesiones de Pomodoro al día.',
     categoryId: 'cat-pomo',
     targetType: 'DAILY',
-    targetValue: 4,
   },
   {
     id: 'goal-ex-30min',
@@ -16,7 +15,6 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
     description: 'Ejercítate al menos 30 minutos al día.',
     categoryId: 'cat-ex',
     targetType: 'DAILY',
-    targetValue: 30,
   },
   {
     id: 'goal-study-2h',
@@ -24,7 +22,6 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
     description: 'Dedica 2 horas diarias al estudio.',
     categoryId: 'cat-study',
     targetType: 'DAILY',
-    targetValue: 120,
   },
   {
     id: 'goal-read-20pages',
@@ -32,7 +29,6 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
     description: 'Lee al menos 20 páginas cada día.',
     categoryId: 'cat-read',
     targetType: 'DAILY',
-    targetValue: 20,
   }
 ];
 

@@ -50,21 +50,6 @@ export const GoalSchema = z
     path: ['startDate'],
   })
 
-
-  .refine(
-    (data) => {
-      
-      if (data.targetType === 'WEEKLY' || data.targetType === 'COUNT') {
-        return data.targetValue !== null && data.targetValue !== undefined && data.targetValue >= 1;
-      }
-      return true; 
-    },
-    {
-      message: 'El valor objetivo es obligatorio y debe ser al menos 1 para este tipo de meta.',
-      path: ['targetValue'],
-    }
-  )
-
   
   .refine(
     (data) => {

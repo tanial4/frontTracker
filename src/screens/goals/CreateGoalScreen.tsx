@@ -23,9 +23,9 @@ import { GoalSchema, GoalFormType } from '../../schemas/createGoalSchema';
 import { MOCK_CATEGORIES } from '../../data/Categories';
 import { GOAL_TEMPLATES } from '../../data/GoalsTypes';
 import { ActivityCategory, GoalTemplate } from '../../types/goal';
-import { TemplateCard } from '../../components/goals/templateGoaldCard';
-import {  RouteStackHomeParamList } from '../../components/navigation/types';
+import { RouteStackHomeParamList } from '../../components/navigation/types';
 import { createGoal } from '../../services/goalsApi';
+import TemplateCard from '../../components/goals/templateGoaldCard';
 
 type HomeNavProp = BottomTabNavigationProp<RouteStackHomeParamList, 'HomeMain'>;
 
@@ -44,7 +44,6 @@ export function CreateGoalScreen({
     GoalTemplate | undefined
   >(undefined);
 
-  
   const methods = useForm<GoalFormType>({
     resolver: zodResolver(GoalSchema),
     mode: 'onChange',
@@ -56,6 +55,7 @@ export function CreateGoalScreen({
       targetType: 'DAILY',
       startDate: new Date(),
       endDate: new Date(),
+      // targetValue: null, // si tu schema lo tiene
     },
   });
 
@@ -66,7 +66,6 @@ export function CreateGoalScreen({
     setSelectedTemplate(template);
   };
 
-  // 🔙 Handler centralizado de "volver"
   const handleGoBack = () => {
     if (onGoBack) {
       onGoBack();
@@ -75,20 +74,16 @@ export function CreateGoalScreen({
     }
   };
 
-
   const handleGoalCreatedInternal = async (data: GoalFormType) => {
     try {
-      // 1. Log rápido para ver qué viene del form
       console.log('Goal form data:', data);
 
-      // 2. Mapear GoalFormType -> CreateGoalPayload (backend)
       const payload = {
-        title: data.title,                          
+        title: data.title,
         description: data.description || undefined,
-        categoryId: data.categoryId || null,       // '' -> null
-        targetType: data.targetType,               
-        
-        targetValue: data.targetValue ?? null,
+        categoryId: data.categoryId || null,
+        targetType: data.targetType,
+        targetValue: (data as any).targetValue ?? null,
         startDate: data.startDate.toISOString(),
         endDate: data.endDate ? data.endDate.toISOString() : null,
         isArchived: false,
@@ -96,26 +91,21 @@ export function CreateGoalScreen({
 
       console.log('Payload enviado a /goals:', payload);
 
-      // Llamar al backend
       const created = await createGoal(payload);
       console.log('Goal creada en backend:', created);
 
-      
       if (onGoalCreated) {
         onGoalCreated(data);
       }
 
-      // Navegar de regreso a Home
       navigation.navigate('HomeMain');
     } catch (error: any) {
       console.error(
         'Error creando meta:',
         error?.response?.data || error.message || error,
       );
-      
     }
   };
-
 
   return (
     <InnerScreenLayout
