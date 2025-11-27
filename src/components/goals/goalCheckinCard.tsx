@@ -12,12 +12,15 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Button } from '../ui/button';
 import { StreakUI } from '../../types/streak';
 
-
 interface StreakCardProps {
+  // Objeto de datos que representa la racha
   streak: StreakUI;
+  // Acción al presionar el botón principal (navegar al detalle)
   onContinue: (streakId: string) => void;
 }
 
+// Componente de tarjeta para mostrar el resumen de una Racha (Streak).
+// Se diferencia visualmente de las Metas normales por el uso del icono de "Fuego" y métricas de grupo.
 export function StreakCard({ streak, onContinue }: StreakCardProps) {
   const {
     id,
@@ -29,13 +32,17 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
     currentStreakDays,
   } = streak;
 
+  // Definición del color temático.
+  // Si la categoría no tiene color, usamos el primario de la marca por defecto.
   const accent = categoryColor ?? COLORS.PRIMARY;
 
   return (
+    // El borde de la tarjeta toma el color de acento para identificar la categoría rápidamente
     <View style={[styles.card, { borderColor: accent }]}>
       
-      {/* --- HEADER --- */}
+      {/* --- HEADER: Icono y Estado --- */}
       <View style={styles.topRow}>
+        {/* Contenedor del icono con fondo tintado (20% opacidad del color acento) */}
         <View
           style={[
             styles.iconWrapper,
@@ -45,6 +52,7 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
           <Flame size={22} color={accent} />
         </View>
 
+        {/* Badge "Activa": Solo se muestra si el usuario ya se unió a esta racha */}
         {isJoined && (
           <View
             style={[
@@ -59,7 +67,7 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
         )}
       </View>
 
-      {/* --- NAME & DESCRIPTION --- */}
+      {/* --- CONTENIDO: Título y Descripción --- */}
       <Text style={styles.title}>{name}</Text>
 
       {!!description && (
@@ -68,21 +76,24 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
         </Text>
       )}
 
-      {/* --- METRICS --- */}
+      {/* --- MÉTRICAS: Días y Miembros --- */}
       <View style={styles.statsRow}>
+        {/* Días acumulados (destacado en color) */}
         {typeof currentStreakDays === 'number' && (
           <Text style={[styles.highlightText, { color: accent }]}>
             {currentStreakDays} días
           </Text>
         )}
 
+        {/* Contador de participantes */}
         <View style={styles.membersWrapper}>
+          {/* Icono de texto simple para ahorrar imports, se puede cambiar por icono SVG si se prefiere */}
           <Text style={styles.membersIcon}>👥</Text>
           <Text style={styles.membersText}>{membersCount} miembros</Text>
         </View>
       </View>
 
-      {/* --- BUTTON --- */}
+      {/* --- BOTÓN DE ACCIÓN --- */}
       <Button
         style={[styles.goButton, { backgroundColor: accent }]}
         onPress={() => onContinue(id)}
@@ -94,7 +105,7 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
 }
 
 // -------------------------------------------------------------
-// STYLES
+// ESTILOS
 // -------------------------------------------------------------
 const styles = StyleSheet.create({
   card: {
@@ -103,13 +114,14 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
+    // Sombras sutiles para elevación
     shadowColor: COLORS.BLACK,
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
 
-  // Header
+  // Encabezado
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -133,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Text
+  // Textos principales
   title: {
     fontSize: 16,
     fontWeight: '700',
@@ -146,7 +158,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // Metrics
+  // Sección de Métricas
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -170,7 +182,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_MUTED,
   },
 
-  // Button
+  // Botón inferior
   goButton: {
     borderRadius: 999,
     paddingVertical: 10,

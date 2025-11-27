@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Home, Trophy, BarChart, User, MessageCircle, HomeIcon } from 'lucide-react-native';
+import { Home, Trophy, BarChart, User, MessageCircle } from 'lucide-react-native';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
+// Configuración estática de las pestañas.
+// Define el orden, el icono y la ruta de navegación para cada elemento.
 const TABS = [
   { name: 'Inicio',   icon: Home,          route: 'Home' },
   { name: 'Chats',    icon: MessageCircle, route: 'Messages' },
@@ -13,12 +15,18 @@ const TABS = [
   { name: 'Perfil',   icon: User,          route: 'Profile' },
 ];
 
+// Tipado estricto para las rutas disponibles en la barra inferior
 export type RouteName = 'Home' | 'Messages' | 'Rankings' | 'Stats' | 'Profile';
 
 interface TabBarProps {
+  // Ruta actual para determinar qué pestaña resaltar
   activeRoute: RouteName;
+  // Función que ejecuta la navegación real (generalmente navigation.navigate)
   onNavigate: (route: RouteName) => void;
-  /** 👇 Nueva prop para poder ocultar la barra */
+  
+  // Controla si la barra se muestra o no.
+  // Es vital para ocultar la barra en pantallas internas (ej: Chat Detalle, Crear Meta)
+  // donde necesitamos más espacio o evitar navegación accidental.
   isVisible?: boolean;
 }
 
@@ -27,7 +35,9 @@ export function BottomNavigationBar({
   onNavigate,
   isVisible = true,
 }: TabBarProps) {
-  // Si no debe ser visible, no renderizamos nada
+  
+  // Si la prop indica ocultar, no renderizamos nada (ni siquiera un contenedor vacío)
+  // para que el contenido de la pantalla pueda ocupar el 100% de la altura.
   if (!isVisible) return null;
 
   return (
@@ -43,18 +53,16 @@ export function BottomNavigationBar({
             onPress={() => onNavigate(tab.route as RouteName)}
             activeOpacity={0.8}
           >
-            <View
-              style={[
-                styles.iconWrapper,
-              ]}
-            >
+            <View style={styles.iconWrapper}>
               <Icon
                 size={24}
+                // Cambio de color: Primario si está activo, Muted si no.
                 color={isActive ? COLORS.PRIMARY : COLORS.TEXT_MUTED}
+                // Cambio de grosor: Hacemos el icono un poco más grueso al seleccionarlo
                 strokeWidth={isActive ? 2 : 1}
-
               />
             </View>
+            
             <Text
               style={[
                 styles.tabLabel,
@@ -75,13 +83,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    height: 70,
+    height: 70, // Altura fija cómoda para el dedo
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
     borderTopWidth: 1,
     borderColor: COLORS.BORDER_COLOR,    
   },
   tabButton: {
-    flex: 1,
+    flex: 1, // Distribuye el espacio equitativamente entre las 5 pestañas
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
@@ -91,16 +99,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconSelected: {
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY
-  },
-  icon: {
-    fontWeight: '100'
-  },
   tabLabel: {
     fontSize: 12,
     color: COLORS.TEXT_MUTED,
+    marginTop: 4, // Pequeña separación entre icono y texto
   },
   tabLabelActive: {
     color: COLORS.PRIMARY,

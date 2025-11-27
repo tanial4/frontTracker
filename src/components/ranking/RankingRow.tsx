@@ -1,4 +1,3 @@
-// src/components/rankings/RankingRow.tsx
 import React from 'react';
 import {
   View,

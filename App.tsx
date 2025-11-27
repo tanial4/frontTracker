@@ -87,6 +87,18 @@ function AppTabs({
       />
 
       <Tab.Screen
+        name="Messages"
+        component={MessagesStackNavigator}
+        options={{
+          title: 'Chats',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
         name="Rankings"
         component={RankingsScreen}
         options={{

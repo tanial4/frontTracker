@@ -41,10 +41,10 @@ export interface StreakUI {
   name: string;
   description?: string | null;
 
-  categoryColor: string;     // 🔵 se obtiene desde categoría real
-  isJoined: boolean;         // 🔵 si el usuario está en la racha
-  membersCount: number;      // 🔵 count de streakMembers
-  currentStreakDays: number; // 🔵 días consecutivos
+  categoryColor: string;     // se obtiene desde categoría real
+  isJoined: boolean;         // si el usuario está en la racha
+  membersCount: number;      // count de streakMembers
+  currentStreakDays: number; // días consecutivos
 }
 
 export interface StreakMembership {
@@ -78,4 +78,11 @@ export interface StreakCheckin {
 
   // si viene de una goal específica
   goalId?: string | null;
+}
+
+export interface streakBackEnd {
+  title: string;
+  description?: string;
+  startdate: string; // ISO
+  endDate?: string; // ISO
 }

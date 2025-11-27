@@ -1,3 +1,5 @@
+// src/components/goals/TemplateGoalCard.tsx
+
 import React from 'react';
 import {
   View,
@@ -23,8 +25,8 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { ActivityCategory, GoalTemplate } from '../../types/goal';
 
 // Mapeo estático de nombres de iconos (Strings) a Componentes React.
-// Esto permite almacenar referencias simples en la base de datos (ej: "Heart") 
-// y renderizar el componente correspondiente en tiempo de ejecución.
+// Esto nos permite guardar referencias simples en la base de datos (ej: "Heart") 
+// y renderizar el componente gráfico correspondiente en tiempo de ejecución.
 const IconMap: Record<string, LucideIcon> = {
   Clock,
   Heart,
@@ -57,6 +59,7 @@ export function TemplateCard({
 }: TemplateCardProps) {
   
   // 1. Resolución de metadatos visuales
+  // Buscamos la categoría asociada para heredar su color e icono.
   const category = allCategories.find((cat) => cat.id === template.categoryId);
 
   // Valores por defecto (Fallback) para evitar errores si la categoría fue eliminada
@@ -75,7 +78,7 @@ export function TemplateCard({
         {
           // Lógica de estilos dinámicos según el estado de selección (isActive):
           
-          // 1. Bordes: Se colorea si está activo para resaltar.
+          // 1. Bordes: Se colorea si está activo para resaltar la selección.
           borderColor: isActive ? color : COLORS.BORDER_COLOR,
           borderLeftColor: color, // El borde izquierdo siempre mantiene el color de identidad
           
@@ -84,7 +87,7 @@ export function TemplateCard({
             ? color + '12' 
             : COLORS.BACKGROUND_SECONDARY,
             
-          // 3. Profundidad: Elevamos la tarjeta si está seleccionada
+          // 3. Profundidad: Elevamos la tarjeta ligeramente si está seleccionada
           shadowOpacity: isActive ? 0.12 : 0.06,
           elevation: isActive ? 3 : 1,
         },
@@ -110,7 +113,7 @@ export function TemplateCard({
             {template.title}
           </Text>
 
-          {/* Etiqueta pequeña con el nombre de la categoría */}
+          {/* Etiqueta pequeña (Pill) con el nombre de la categoría */}
           {category?.name && (
             <View style={styles.categoryPill}>
               <View
@@ -192,7 +195,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
   },
 
-  // Estilos para la etiqueta de categoría (Pill)
+  // Estilos para la etiqueta de categoría
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,10 +1,8 @@
-// src/lib/utils.ts
-
-// 1. Importa los tipos y la función clsx para concatenar clases condicionalmente.
+// Importa los tipos y la función clsx para concatenar clases condicionalmente.
 //    'ClassValue' es el tipo que acepta clsx (string, array, objeto, null, undefined).
 import { type ClassValue, clsx } from "clsx"
 
-// 2. Importa twMerge para resolver conflictos de Tailwind (ej. 'p-4' vs 'p-8').
+// Importa twMerge para resolver conflictos de Tailwind (ej. 'p-4' vs 'p-8').
 import { twMerge } from "tailwind-merge"
 
 /**
@@ -17,6 +15,5 @@ export function cn(...inputs: ClassValue[]) {
   // 1. clsx(inputs): Convierte todos los arrays/objetos condicionales en una sola cadena de clases.
   // 2. twMerge(...): Toma esa cadena y elimina los conflictos (ej. 'bg-red-500 bg-blue-500' -> 'bg-blue-500').
   
-  // 🚨 NOTA: La sintaxis correcta para twMerge que recibe una cadena es (clsx(...))
   return twMerge(clsx(inputs))
 }

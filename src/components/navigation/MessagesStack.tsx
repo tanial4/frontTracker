@@ -9,8 +9,6 @@ import ChatRoomScreen from '../../screens/chats/ChatRoomScreen';
 import PublicProfileScreen from '../../screens/profile/PublicProfileScreen';
 import FriendRequestsScreen from '../../screens/firendships/FriendRequestScreen';
 import FriendsScreen from '../../screens/firendships/FrienshipListScreen';
-import { Friendship } from '../../types/friendship';
-import { Profile } from '../../types/user';
 
 export type MessagesStackParamList = {
   ChatList: undefined;
@@ -27,7 +25,7 @@ export default function MessagesStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        animation: 'none',       // ❗️SIN ANIMACIONES
+        animation: 'none',      
       }}
     >
       {/* Lista de chats */}

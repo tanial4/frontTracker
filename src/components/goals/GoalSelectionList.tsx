@@ -1,3 +1,5 @@
+// src/components/goals/GoalSelectionList.tsx
+
 import React from 'react';
 import {
   View,
@@ -23,7 +25,7 @@ interface GoalSelectionListProps {
 }
 
 // Componente de lista de selección múltiple con límite.
-// Se usa para filtrar qué metas aparecen en las gráficas de estadísticas.
+// Se usa para filtrar qué metas aparecen en las gráficas de estadísticas o en el resumen del home.
 export function GoalSelectionList({
   items,
   selectedIds,
@@ -55,22 +57,22 @@ export function GoalSelectionList({
           return (
             <TouchableOpacity
               key={goal.id}
-              // Quitamos el feedback táctil si está deshabilitado
+              // Quitamos el feedback táctil si está deshabilitado para indicar que no es interactuable
               activeOpacity={isLimitReached ? 1 : 0.8}
               onPress={() => {
-                // Prevenir acción si se alcanzó el límite
+                // Prevenir acción si se alcanzó el límite y no es un item seleccionado
                 if (isLimitReached) return;
                 onToggle(goal.id);
               }}
               style={[
                 styles.item,
                 isSelected && styles.itemSelected,
-                // Aplicamos estilo visual de "deshabilitado" (opacidad)
+                // Aplicamos estilo visual de "deshabilitado" (opacidad reducida)
                 isLimitReached && !isSelected && styles.itemDisabled,
               ]}
             >
               <View style={styles.leftRow}>
-                {/* Punto de color que corresponde a la línea en la gráfica */}
+                {/* Punto de color que corresponde a la línea en la gráfica circular */}
                 <View
                   style={[
                     styles.colorDot,

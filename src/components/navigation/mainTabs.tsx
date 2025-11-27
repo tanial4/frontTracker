@@ -1,11 +1,8 @@
-// src/components/navigation/MainTabs.tsx
-
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigationBar } from './navBar'; 
 
 
-import ProfileScreen from '../../screens/profile/ProfileScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout as apiLogout } from '../../services/authApi';
 import { useNavigation } from '@react-navigation/native';
@@ -14,8 +11,6 @@ import { RootTabParamList } from './types';
 import MessagesStack from './MessagesStack';
 import { StatsScreen } from '../../screens/stats/StatsScreen';
 import { CreateGoalScreen } from '../../screens/goals/CreateGoalScreen';
-import HomeScreen from '../../screens/home/HomeScreen';
-import { Home } from 'lucide-react-native';
 import HomeStackNavigator from './HomeStack';
 import { ProfileScreenContainer } from '../../screens/profile/ProfileScreenContainer';
 

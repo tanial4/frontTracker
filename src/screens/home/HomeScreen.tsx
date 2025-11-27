@@ -187,7 +187,7 @@ const checkinsForProgress = useMemo<FrontCheckin[]>(() => {
       date: new Date(c.date),
       value: c.value ?? null,
       done: c.done,
-    };  
+    };
   });
 }, [realCheckins, currentUser]);
 
@@ -233,7 +233,7 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
     if (stats) {
       if (stats.completion !== null && stats.completion !== undefined) {
         // el back ya calculó completion normalizado 0–1
-        percentage = Math.round(stats.completion * 100);
+        percentage = stats.completion * 100;
       } else if (stats.totalCheckins > 0) {
         // fallback: porcentaje de checkins marcados como "hechos"
         percentage = (stats.doneCount / stats.totalCheckins) * 100;
@@ -339,33 +339,25 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
               visibleItems={visibleGoals}
               allGoals={goalsForProgress}
               allCategories={MOCK_CATEGORIES}
-              allCheckins={realCheckins}
+              allCheckins={todayCheckinsForUi}
               currentUserId={currentUser?.id ?? ''}
-              onCheckin={async (goalId) => {       
+              onCheckin={async (goalId) => {       // 👈 AQUÍ va el async
                 try {
-                
+                // 1️⃣ Buscar la meta real por ID
                 const goal = realGoals.find((g) => g.id === goalId);
                 if (!goal) {
                   console.warn('Meta no encontrada para check-in', goalId);
                   return;
                 }
+
                 const newCheckin = await createGoalCheckin(goal);
+
                 setRealCheckins((prev) => [...prev, newCheckin]);
 
-                const now = new Date();
-                const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
-                const fromDate = new Date();
-                fromDate.setDate(now.getDate() - 30);
-                const from = fromDate.toISOString().slice(0, 10);
-
-                const updatedStats = await getGoalProgress(goalId, { from, to });
-
-               
-                setGoalStats((prev) => ({
-                  ...prev,
-                  [goalId]: updatedStats,
-                }));
-
+                // Esto recalcula:
+                // - checkinsForProgress
+                // - goalProgressItems
+                // => gráfica y lista de hoy se actualizan
               } catch (err: any) {
                 console.error('Error al hacer check-in:', err?.response?.data ?? err);
               }
