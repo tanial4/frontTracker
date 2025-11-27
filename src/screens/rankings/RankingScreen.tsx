@@ -1,20 +1,23 @@
 // src/screens/rankings/RankingsScreen.tsx
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { MainLayout } from '../../components/layout/MainLayout';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { RankingsStackParamList } from '../../components/navigation/RankingStack';
 import { RankingEntryUI } from '../../types/stats';
-import { MOCK_RANKING_GLOBAL } from '../../data/TestRankingData';
+import { getTodayPeriod, listRankings, ListRankingsResponse } from '../../services/rankingApi';
+import RankingRow from '../../components/ranking/RankingRow';
+import { Trophy, UserX, X } from 'lucide-react-native';
 
 
 type Nav = NativeStackNavigationProp<RankingsStackParamList, 'RankingsHome'>;
@@ -22,40 +25,76 @@ type Nav = NativeStackNavigationProp<RankingsStackParamList, 'RankingsHome'>;
 export function RankingsScreen() {
   const navigation = useNavigation<Nav>();
 
+  const [data, setData] = useState<RankingEntryUI[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [period, setPeriod] = useState<string>(getTodayPeriod());
+
+  const fetchRankings = async (opts?: { showLoader?: boolean }) => {
+    try {
+      if (opts?.showLoader !== false) setLoading(true);
+      setErrorMsg(null);
+
+      const res: ListRankingsResponse = await listRankings({
+        period,
+        limit: 100,
+      });
+
+      const mapped: RankingEntryUI[] = res.rankings.map((entry, index) => {
+        const displayName =
+          entry.user.username ??
+          entry.user.email ??
+          `Usuario ${index + 1}`;
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          displayName,
+          period: res.period,
+          score: entry.score,
+          rank: index + 1, // 1-based
+          avatarURL: null, // no tenemos avatar en este endpoint (se podría extender el backend luego)
+        };
+      });
+
+      setData(mapped);
+    } catch (err) {
+      console.log('Error cargando rankings', err);
+      setErrorMsg('No se pudo cargar el ranking.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // cargar al entrar y cuando gane foco
+  useFocusEffect(
+    useCallback(() => {
+      fetchRankings();
+
+      return () => {};
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [period])
+  );
+
   const handleRowPress = (userId: string) => {
     navigation.navigate('PublicProfile', { userId });
   };
 
-  const renderItem = ({ item }: { item: RankingEntryUI }) => {
-    const isTop3 = item.rank <= 3;
+  const renderItem = ({ item }: { item: RankingEntryUI }) => (
+    <RankingRow item={item} onPress={handleRowPress} />
+  );
 
-    return (
-      <TouchableOpacity
-        style={[styles.row, isTop3 && styles.rowTop3]}
-        activeOpacity={0.8}
-        onPress={() => handleRowPress(item.userId)}
-      >
-        {/* Posición */}
-        <View style={styles.rankCircle}>
-          <Text style={styles.rankText}>{item.rank}</Text>
-        </View>
-
-        {/* Info usuario */}
-        <View style={styles.userInfo}>
-          <Text style={styles.name} numberOfLines={1}>
-            {item.displayName}
-          </Text>
-          <Text style={styles.period}>{item.period}</Text>
-        </View>
-
-        {/* Score */}
-        <View style={styles.scoreWrapper}>
-          <Text style={styles.scoreLabel}>Puntos</Text>
-          <Text style={styles.scoreValue}>{item.score}</Text>
-        </View>
-      </TouchableOpacity>
-    );
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchRankings({ showLoader: false });
   };
+
+  const subtitleText =
+    data.length > 0
+      ? `Ranking – ${period}`
+      : '';
 
   return (
     <MainLayout
@@ -64,16 +103,45 @@ export function RankingsScreen() {
       onNavigate={(route) => (navigation as any).navigate(route)}
     >
       <View style={styles.container}>
-        <Text style={styles.subtitle}>
-          Snapshot semanal – ranking global
-        </Text>
+        <Text style={styles.subtitle}>{subtitleText}</Text>
 
-        <FlatList
-          data={MOCK_RANKING_GLOBAL}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-        />
+        {loading && !refreshing ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+            <Text style={styles.loadingText}>Cargando ranking...</Text>
+          </View>
+        ) : errorMsg ? (
+          <View style={styles.centered}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={data}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={[
+              styles.listContent,
+              data.length === 0 && styles.emptyListContent,
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={COLORS.PRIMARY}
+              />
+            }
+            ListEmptyComponent={
+              !loading ? (
+                <View style={styles.centered}>
+                  <Trophy size={70} color={COLORS.TEXT_MUTED + '88'} />
+                  <Text style={styles.emptyText}>
+                    No hay usuarios en el ranking aún.
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
       </View>
     </MainLayout>
   );
@@ -87,67 +155,40 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   subtitle: {
-    fontSize: 13,
+    marginTop: 10,
+    fontSize: 20,
     color: COLORS.TEXT_MUTED,
     marginBottom: 8,
+    paddingHorizontal: 4,
   },
   listContent: {
     paddingBottom: 24,
   },
-
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: COLORS.BACKGROUND_SECONDARY,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_COLOR,
+  emptyListContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
-  rowTop3: {
-    borderColor: COLORS.PRIMARY,
-  },
-  rankCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.BACKGROUND_DEFAULT,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_COLOR,
+  centered: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    paddingTop: 20,
   },
-  rankText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.TEXT_PRIMARY,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.TEXT_PRIMARY,
-  },
-  period: {
+  loadingText: {
+    marginTop: 6,
     fontSize: 12,
     color: COLORS.TEXT_MUTED,
   },
-  scoreWrapper: {
-    alignItems: 'flex-end',
+  errorText: {
+    fontSize: 13,
+    color: COLORS.ERROR_TEXT,
+    textAlign: 'center',
   },
-  scoreLabel: {
-    fontSize: 11,
-    color: COLORS.TEXT_MUTED,
-  },
-  scoreValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.PRIMARY,
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.TEXT_MUTED + '88',
+    textAlign: 'center',
+    paddingTop: 12,
   },
 });
 

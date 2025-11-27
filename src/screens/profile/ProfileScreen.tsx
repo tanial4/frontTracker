@@ -17,7 +17,7 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Profile } from '../../types/user';
-import { BackendProfile, BackendUser, getMe, getMyProfile } from '../../services/userApi';
+import { BackendProfile, BackendUser, getMe, getMyProfile, deleteMyAccount } from '../../services/userApi';
 
 interface ProfileScreenProps {
   user?: Partial<Profile> & {
@@ -62,6 +62,7 @@ export function ProfileScreen({
   const [profile, setProfile] = useState<BackendProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
   // 🔹 Cargar /users/me y /users/me/profile cada vez que la pantalla gana foco
   useFocusEffect(
@@ -106,15 +107,10 @@ export function ProfileScreen({
   const avatarFromProfile = profile?.avatarUrl ?? undefined;
   const bioFromProfile = profile?.bio ?? undefined;
 
-  // Nombre a mostrar: fullName > username > email > "Usuario"
-  const displayName: string =
-    fullNameFromProfile ??
-    user?.fullName ??
-    me?.username ??
-    user?.email ??
-    'Usuario';
+  // Nombre a mostrar: si existe fullName en el profile úsalo, si no mostrar 'usuario'
+  const displayName: string = fullNameFromProfile ?? 'usuario';
 
-  const email: string = me?.email ?? user?.email ?? 'usuario@example.com';
+  const email: string = me?.email ?? 'usuario@example.com';
 
   const effectiveCreatedAt: Date = me?.createdAt
     ? new Date(me.createdAt)
@@ -145,6 +141,34 @@ export function ProfileScreen({
         onPress: onLogout,
       },
     ]);
+  };
+
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      'Eliminar cuenta',
+      'Esta acción eliminará permanentemente tu cuenta. ¿Estás seguro?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar cuenta',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await deleteMyAccount();
+              // Mostrar confirmación y luego cerrar sesión / navegar fuera
+              Alert.alert('Cuenta eliminada', 'Tu cuenta ha sido eliminada correctamente.');
+              onLogout();
+            } catch (err) {
+              console.warn('delete account failed', err);
+              Alert.alert('Error', 'No se pudo eliminar la cuenta. Intenta de nuevo más tarde.');
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -228,6 +252,21 @@ export function ProfileScreen({
               style={styles.menuIcon}
             />
             <Text style={styles.logoutText}>Cerrar sesión</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, styles.deleteButton]}
+            onPress={handleDeleteAccountPress}
+            disabled={deleting}
+          >
+            <LogOut
+              size={20}
+              color={COLORS.ERROR_TEXT}
+              style={styles.menuIcon}
+            />
+            <Text style={[styles.logoutText, { color: COLORS.ERROR_TEXT }]}>Eliminar cuenta</Text>
+            {deleting && (
+              <ActivityIndicator size="small" color={COLORS.ERROR_TEXT} style={{ marginLeft: 8 }} />
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -360,6 +399,10 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   logoutButton: {
+    backgroundColor: COLORS.BACKGROUND_DEFAULT,
+    borderBottomWidth: 0,
+  },
+  deleteButton: {
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
     borderBottomWidth: 0,
   },

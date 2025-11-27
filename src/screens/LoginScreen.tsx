@@ -3,11 +3,13 @@
 import React from 'react';
 import {
   View,
-  Text,  SafeAreaView,
+  Text,
+  SafeAreaView,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,12 +55,26 @@ export function LoginScreen({
   const handleLoginSubmit =async (data: LoginFormType) => {
     console.log('Login data:', data);
     // Aquí luego harás tu llamada al backend
+    try {
+      const res = await login(data.email, data.password);
+      // login() already persists tokens in AsyncStorage, but keep local storage in case
+      try {
+        await AsyncStorage.setItem('accessToken', res.accessToken);
+        await AsyncStorage.setItem('refreshToken', res.refreshToken);
+      } catch (err) {
+        console.warn('failed to persist tokens locally', err);
+      }
 
-    const res = await login(data.email, data.password);
-    await AsyncStorage.setItem('accessToken', res.accessToken);
-    await AsyncStorage.setItem('refreshToken', res.refreshToken);
-
-    onLogin(); // RootNavigator se encarga de cambiar isAuthenticated
+      onLogin(); // RootNavigator se encarga de cambiar isAuthenticated
+    } catch (err: any) {
+      console.warn('login failed', err);
+      const status = err?.response?.status;
+      if (status === 401) {
+        Alert.alert('Error', 'Datos Incorrectos. Revisa tu email y contraseña.');
+      } else {
+        Alert.alert('Error', 'Datos incorrectos. Intenta de nuevo más tarde.');
+      }
+    }
   };
 
   return (

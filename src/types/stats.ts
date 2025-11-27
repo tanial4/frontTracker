@@ -1,10 +1,9 @@
-// src/types/ranking.ts
-export interface RankingEntryUI {
+export type RankingEntryUI = {
   id: string;
-  period: string;     // '2025-W37', '2025-09', etc.
   userId: string;
   displayName: string;
-  avatarURL?: string | null;
+  period: string;
   score: number;
-  rank: number;       // 1, 2, 3...
-}
+  rank: number;          // posición en el ranking (1-based)
+  avatarURL?: string | null;
+};

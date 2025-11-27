@@ -10,7 +10,6 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { RankingEntryUI } from '../../types/stats';
 
-
 interface Props {
   item: RankingEntryUI;
   onPress: (userId: string) => void;
@@ -45,7 +44,7 @@ export default function RankingRow({ item, onPress }: Props) {
           {item.avatarURL ? (
             <AvatarImage source={{ uri: item.avatarURL }} />
           ) : (
-            <AvatarFallback fullName={initials} />
+            <AvatarFallback fullName={item.displayName || initials} />
           )}
         </Avatar>
 
@@ -68,6 +67,7 @@ export default function RankingRow({ item, onPress }: Props) {
   );
 }
 
+// estilos igual que ya los tienes…
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -84,8 +84,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.PRIMARY,
     backgroundColor: COLORS.PRIMARY + '10',
   },
-
-  // Rank
   rankBox: {
     width: 34,
     height: 34,
@@ -109,8 +107,6 @@ const styles = StyleSheet.create({
   rankTextTop3: {
     color: COLORS.PRIMARY,
   },
-
-  // Avatar + Info
   userInfo: {
     flex: 1,
     flexDirection: 'row',
@@ -130,8 +126,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.TEXT_MUTED,
   },
-
-  // Score
   scoreWrapper: {
     alignItems: 'flex-end',
     marginLeft: 12,

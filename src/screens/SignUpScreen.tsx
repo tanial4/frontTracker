@@ -22,7 +22,8 @@ import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { signup } from '../services/authApi';
+import { signup, login } from '../services/authApi';
+import { Alert } from 'react-native';
 
 interface SignupScreenProps {
   onSignup?: (data: SignUpFormType) => void;
@@ -91,12 +92,51 @@ const onSubmit = async (data: SignUpFormType) => {
 
       // Si NO devuelve tokens, asumimos que solo crea el user
       // y mandamos a Login o callback
-      if (onSignupSuccess) {
-        onSignupSuccess();
-      } else if (onSwitchToLogin) {
-        onSwitchToLogin();
-      } else if (navigation) {
-        navigation.replace('Login');
+      if (res.accessToken && res.refreshToken) {
+        // already handled above, but keep safety
+        if (onSignupSuccess) onSignupSuccess();
+        if (navigation) {
+          navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+        }
+        return;
+      }
+
+      // If backend didn't return tokens, try to log the user in automatically
+      try {
+        const loginRes = await login(data.email, data.password);
+        // Persist tokens if returned
+        if (loginRes?.accessToken && loginRes?.refreshToken) {
+          try {
+            await AsyncStorage.setItem('accessToken', loginRes.accessToken);
+            await AsyncStorage.setItem('refreshToken', loginRes.refreshToken);
+          } catch (err) {
+            console.warn('Failed to persist tokens after signup-login', err);
+          }
+
+          if (onSignupSuccess) onSignupSuccess();
+          if (navigation) {
+            navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+          }
+          return;
+        }
+
+        // If login also didn't return tokens, fall back to callbacks/navigation
+        if (onSignupSuccess) {
+          onSignupSuccess();
+        } else if (onSwitchToLogin) {
+          onSwitchToLogin();
+        } else if (navigation) {
+          navigation.replace('Login');
+        }
+      } catch (loginErr: any) {
+        console.warn('Auto-login after signup failed', loginErr);
+        // Fall back to redirecting to login screen and inform the user
+        Alert.alert('Registro completado', 'Tu cuenta fue creada. Inicia sesión para continuar.');
+        if (onSwitchToLogin) {
+          onSwitchToLogin();
+        } else if (navigation) {
+          navigation.replace('Login');
+        }
       }
     } catch (err: any) {
       console.error('Error en signup', err?.response?.data || err.message);
@@ -165,15 +205,19 @@ const onSubmit = async (data: SignUpFormType) => {
 
             {/* LINK A LOGIN */}
             <View style={styles.loginLinkContainer}>
-              <Text style={styles.loginLinkText}>
-                ¿Ya tienes cuenta?{' '}
-                <Text
-                  onPress={onSwitchToLogin}
-                  style={styles.loginLink}
+              <View style={styles.loginRow}>
+                <Text style={styles.loginLinkText}>¿Ya tienes cuenta?</Text>
+                <Button
+                  variant="link"
+                  onPress={() => {
+                    if (onSwitchToLogin) return onSwitchToLogin();
+                    if (navigation) return navigation.replace('Login');
+                  }}
+                  style={styles.loginLinkButton}
                 >
                   Iniciar sesión
-                </Text>
-              </Text>
+                </Button>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -256,6 +300,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
     fontSize: 14,
+  },
+  loginRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loginLinkButton: {
+    paddingHorizontal: 6,
   },
 });
 
