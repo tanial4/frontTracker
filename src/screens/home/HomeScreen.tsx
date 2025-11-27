@@ -187,7 +187,7 @@ const checkinsForProgress = useMemo<FrontCheckin[]>(() => {
       date: new Date(c.date),
       value: c.value ?? null,
       done: c.done,
-    };
+    };  
   });
 }, [realCheckins, currentUser]);
 
@@ -339,25 +339,33 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
               visibleItems={visibleGoals}
               allGoals={goalsForProgress}
               allCategories={MOCK_CATEGORIES}
-              allCheckins={todayCheckinsForUi}
+              allCheckins={realCheckins}
               currentUserId={currentUser?.id ?? ''}
-              onCheckin={async (goalId) => {       // 👈 AQUÍ va el async
+              onCheckin={async (goalId) => {       
                 try {
-                // 1️⃣ Buscar la meta real por ID
+                
                 const goal = realGoals.find((g) => g.id === goalId);
                 if (!goal) {
                   console.warn('Meta no encontrada para check-in', goalId);
                   return;
                 }
-
                 const newCheckin = await createGoalCheckin(goal);
-
                 setRealCheckins((prev) => [...prev, newCheckin]);
 
-                // Esto recalcula:
-                // - checkinsForProgress
-                // - goalProgressItems
-                // => gráfica y lista de hoy se actualizan
+                const now = new Date();
+                const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
+                const fromDate = new Date();
+                fromDate.setDate(now.getDate() - 30);
+                const from = fromDate.toISOString().slice(0, 10);
+
+                const updatedStats = await getGoalProgress(goalId, { from, to });
+
+               
+                setGoalStats((prev) => ({
+                  ...prev,
+                  [goalId]: updatedStats,
+                }));
+
               } catch (err: any) {
                 console.error('Error al hacer check-in:', err?.response?.data ?? err);
               }

@@ -81,14 +81,14 @@ export const MOCK_CATEGORIES: (ActivityCategory)[] = [
 
 
 export const CATEGORIES = [
-    { label: 'Pomodoro', value: 'cat-pomo' },
-    { label: 'Ejercicio', value: 'cat-ex' },
-    { label: 'Estudio', value: 'cat-study' },
+    { label: 'Pomodoro', value: 'cmihuk9yf0003wirg0g9qj79s' },
+    { label: 'Ejercicio', value: 'cmihukgxh0004wirge8qn0qph' },
+    { label: 'Estudio', value: 'cmihuknm10005wirgxs82m2hb' },
     { label: 'Lectura', value: 'cmidyflo30000wi7sd8yec8xo' },
-    { label: 'Meditación', value: 'cat-med' },
-    { label: 'Agua', value: 'cat-water' },
-    { label: 'Salud', value: 'cat-health' },
-    { label: 'Programación', value: 'cat-dev' },
-    { label: 'Música', value: 'cat-music' },
-    { label: 'Otro', value: 'cat-other' },
+    { label: 'Meditación', value: 'cmihuktgf0006wirgdhs38glr' },
+    { label: 'Agua', value: 'cmihukytz0007wirg9bmd48lv' },
+    { label: 'Salud', value: 'cmihul66w0008wirgnexab19b' },
+    { label: 'Programación', value: 'cmihulbma0009wirg10nhb46q' },
+    { label: 'Música', value: 'cmihulgk8000awirgs906aid7' },
+    { label: 'Otro', value: 'cmihulkrj000bwirgedb0ixr3' },
 ];

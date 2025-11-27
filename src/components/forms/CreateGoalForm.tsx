@@ -11,24 +11,33 @@ import { GoalFormType } from '../../schemas/createGoalSchema';
 import { GoalTemplate, ActivityCategory } from '../../types/goal';
 import { TARGET_TYPE_OPTIONS } from '../../data/Options';
 import { FormDate } from './FormDate';
-import { CATEGORIES } from '../../data/Categories';
+
 
 // Función auxiliar para calcular los valores iniciales
+// src/components/forms/CreateGoalForm.tsx
+
+// ... imports ...
+
+// getFormDefaults: añadimos daysPerWeek opcional
 const getFormDefaults = (template?: GoalTemplate): GoalFormType => {
   return {
     title: template?.title || '',
     description: template?.description || '',
-    categoryId: template?.categoryId || '',
+    categoryId: '',        // 👈 siempre vacío, que la elija el usuario
     targetType:
       template && (template.targetType === 'WEEKLY' || template.targetType === 'DAILY')
         ? (template.targetType as any)
         : 'DAILY',
     startDate: new Date(),
     endDate: new Date(),
-    // si tu GoalFormType tiene targetValue, lo dejamos caer aquí:
-    // targetValue: template?.targetValue ?? null,
+    daysPerWeek:
+      template?.targetType === 'WEEKLY' && (template as any).targetValue
+        ? String((template as any).targetValue)
+        : '',
   };
 };
+
+
 
 interface CreateGoalFormProps {
   onCancel: () => void;
@@ -43,7 +52,8 @@ export function CreateGoalForm({
   initialTemplate,
   methods,
   onCreate,
-  allCategories,
+  allCategories
+
 }: CreateGoalFormProps) {
   const {
     handleSubmit,
@@ -55,6 +65,8 @@ export function CreateGoalForm({
   const [uiGoalType, setUiGoalType] = useState<'DAILY' | 'WEEKLY'>(
     initialTemplate?.targetType === 'WEEKLY' ? 'WEEKLY' : 'DAILY'
   );
+
+  
 
   // Cuando cambia la plantilla, reseteamos el form con sus valores
   useEffect(() => {
@@ -111,7 +123,10 @@ export function CreateGoalForm({
           name="categoryId"
           label="Categoría *"
           placeholder="Selecciona una categoría"
-          options={CATEGORIES}
+          options={allCategories.map((cat) => ({
+                  label: cat.name,   // o cat.label, según tu tipo ActivityCategory
+                    value: cat.id,
+                  }))}
         />
 
         {/* Tipo de meta (Diaria / Semanal) */}
@@ -143,6 +158,15 @@ export function CreateGoalForm({
             );
           })}
         </View>
+
+         {uiGoalType === 'WEEKLY' && (
+          <FormInput
+            name="daysPerWeek"
+            label="¿Cuántos días por semana quieres cumplir esta meta? *"
+            placeholder="Ej: 3"
+            keyboardType="numeric"      // asumiendo que FormInput pasa esto al TextInput interno
+          />
+        )}
 
         {/* Fechas */}
         <View style={styles.dateGroup}>

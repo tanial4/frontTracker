@@ -1,6 +1,6 @@
 // src/screens/goals/CreateGoalScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -20,12 +20,13 @@ import InnerScreenLayout from '../../components/layout/InnerLayout';
 
 import { CreateGoalForm } from '../../components/forms/CreateGoalForm';
 import { GoalSchema, GoalFormType } from '../../schemas/createGoalSchema';
-import { MOCK_CATEGORIES } from '../../data/Categories';
+
 import { GOAL_TEMPLATES } from '../../data/GoalsTypes';
-import { ActivityCategory, GoalTemplate } from '../../types/goal';
+import {  ActivityCategory, GoalTemplate } from '../../types/goal';
 import { RouteStackHomeParamList } from '../../components/navigation/types';
 import { createGoal } from '../../services/goalsApi';
 import TemplateCard from '../../components/goals/templateGoaldCard';
+import { CategoryResponse, listCategories } from '../../services/categoriesApi';
 
 type HomeNavProp = BottomTabNavigationProp<RouteStackHomeParamList, 'HomeMain'>;
 
@@ -55,16 +56,37 @@ export function CreateGoalScreen({
       targetType: 'DAILY',
       startDate: new Date(),
       endDate: new Date(),
-      // targetValue: null, // si tu schema lo tiene
+      daysPerWeek:""
     },
   });
 
-  const allCategoriesTyped = MOCK_CATEGORIES as ActivityCategory[];
+  
   const templatesToRender = GOAL_TEMPLATES as GoalTemplate[];
 
   const handleTemplateSelect = (template: GoalTemplate) => {
     setSelectedTemplate(template);
   };
+
+const [categories, setCategories] = useState<CategoryResponse[]>([]);
+
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const data = await listCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error('Error cargando categorías:', err);
+    }
+  };
+
+  fetchCategories();
+}, []);
+
+const allCategoriesTyped: ActivityCategory[] = categories.map((c) => ({
+  id: c.id,
+  name: c.name,
+  color: COLORS.PRIMARY,
+}));
 
   const handleGoBack = () => {
     if (onGoBack) {
@@ -75,37 +97,50 @@ export function CreateGoalScreen({
   };
 
   const handleGoalCreatedInternal = async (data: GoalFormType) => {
-    try {
-      console.log('Goal form data:', data);
+  try {
+    console.log('Goal form data:', data);
 
-      const payload = {
-        title: data.title,
-        description: data.description || undefined,
-        categoryId: data.categoryId || null,
-        targetType: data.targetType,
-        targetValue: (data as any).targetValue ?? null,
-        startDate: data.startDate.toISOString(),
-        endDate: data.endDate ? data.endDate.toISOString() : null,
-        isArchived: false,
-      } as const;
+    // 👇 calcular targetValue según el tipo
+    let targetValue: number | null = null;
 
-      console.log('Payload enviado a /goals:', payload);
-
-      const created = await createGoal(payload);
-      console.log('Goal creada en backend:', created);
-
-      if (onGoalCreated) {
-        onGoalCreated(data);
+    if (data.targetType === 'WEEKLY') {
+      const n = Number(data.daysPerWeek);
+      if (!n || n < 1 || !Number.isFinite(n)) {
+        console.warn('Debes indicar cuántos días por semana (>= 1)');
+        return; // o muestra un toast/alert y no envíes nada
       }
-
-      navigation.navigate('HomeMain');
-    } catch (error: any) {
-      console.error(
-        'Error creando meta:',
-        error?.response?.data || error.message || error,
-      );
+      targetValue = n;
     }
-  };
+
+    const payload = {
+      title: data.title,
+      description: data.description || undefined,
+      categoryId: data.categoryId ,
+      targetType: data.targetType,  // 'DAILY' o 'WEEKLY'
+      targetValue,                  // 👈 solo número para WEEKLY, null para DAILY
+      startDate: data.startDate.toISOString(),
+      endDate: data.endDate ? data.endDate.toISOString() : null,
+      isArchived: false,
+    } as const;
+
+    console.log('Payload enviado a /goals:', payload);
+
+    const created = await createGoal(payload);
+    console.log('Goal creada en backend:', created);
+
+    if (onGoalCreated) {
+      onGoalCreated(data);
+    }
+
+    navigation.navigate('HomeMain');
+  } catch (error: any) {
+    console.error(
+      'Error creando meta:',
+      error?.response?.data || error.message || error,
+    );
+  }
+};
+
 
   return (
     <InnerScreenLayout
