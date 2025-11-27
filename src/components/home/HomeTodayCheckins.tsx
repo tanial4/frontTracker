@@ -2,23 +2,34 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import SimpleCheckinButton from '../../components/goals/simpleCheckinCard';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
+import { GoalCheckinResponse } from '../../services/checkinsApi';
 
 interface Props {
-  // Items simplificados que se muestran en la gráfica circular
-  visibleItems: any[]; 
-  // Objetos completos de meta para buscar relaciones (categorías, descripciones, etc.)
-  allGoals: any[]; 
-  // Lista de categorías para resolver colores temáticos
+  visibleItems: any[];
+  allGoals: any[];
   allCategories: any[];
-  // Historial completo de registros (mocks o reales)
-  allCheckins: any[]; 
+  allCheckins: GoalCheckinResponse[];
   currentUserId: string;
-  // Acción al pulsar el botón de check-in
   onCheckin: (goalId: string) => void;
 }
 
-// Sección de "Agenda Diaria" en el Home.
-// Muestra una lista plana de las metas seleccionadas con un botón de acción rápida para marcar el progreso del día.
+// helper: compara sólo por YYYY-MM-DD (sin husos horarios)
+const isToday = (dateStr: string) => {
+  if (!dateStr) return false;
+
+  // lo que viene del backend: '2025-11-27T00:00:00.000Z' → '2025-11-27'
+  const checkinDate = dateStr.slice(0, 10);
+
+  // hoy en local, formateado manualmente a 'YYYY-MM-DD'
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayLocal = `${year}-${month}-${day}`;
+
+  return checkinDate === todayLocal;
+};
+
 export default function HomeTodayCheckins({
   visibleItems,
   allGoals,
@@ -31,40 +42,54 @@ export default function HomeTodayCheckins({
     <View style={styles.todaySection}>
       <Text style={styles.todaySectionTitle}>Tus metas hoy</Text>
 
-      {/* Estado vacío: Si el usuario desmarcó todas las metas en el filtro */}
       {visibleItems.length === 0 ? (
         <Text style={styles.emptyText}>Selecciona metas para verlas aquí.</Text>
       ) : (
         visibleItems.map((goalItem) => {
-          
-          // 1. Lógica de Estado: Determinar si la meta ya se cumplió hoy.
-          // Filtramos el historial buscando registros de este usuario para esta meta específica.
-          const goalCheckins = allCheckins.filter(
+          // Checkins de ESTA meta y ESTE usuario
+          const goalCheckinsForUser = allCheckins.filter(
             (c) => c.goalId === goalItem.id && c.userId === currentUserId
           );
 
-          // Si existe algún registro con fecha válida (checkedAt), consideramos la meta como hecha.
-          const doneToday = goalCheckins.some((c) => !!c.checkedAt);
+          // Solo los de HOY (comparando por fecha sin hora)
+          const goalCheckinsToday = goalCheckinsForUser.filter((c) =>
+            isToday(c.date)
+          );
 
-          // 2. Lógica de Diseño: Resolver el color de la categoría.
-          // Buscamos el objeto "Goal" completo y luego su categoría asociada.
+          // 🔍 Debug si quieres seguir viendo
+          console.log('Goal', goalItem.id, 'checkins user', currentUserId, {
+            goalCheckinsForUser,
+            goalCheckinsToday,
+          });
+
+          // Si hay al menos uno hoy (y opcionalmente done === true), la meta ya está marcada
+          const doneToday =
+            goalCheckinsToday.length > 0 &&
+            goalCheckinsToday.some((c) => c.done === true);
+
+          // Resolver color
           const goal = allGoals.find((g) => g.id === goalItem.id);
           const category = goal
-            ? allCategories.find((c) => c.id === goal.category?.id)
+            ? allCategories.find(
+                (c) => c.id === goal.category?.id || c.id === goal.categoryId
+              )
             : undefined;
 
-          // Cadena de fallback para el color: Categoría -> Color del Item -> Color Primario por defecto
-          const categoryColor = category?.color ?? goalItem.color ?? COLORS.PRIMARY;
+          const categoryColor =
+            category?.color ?? goalItem.color ?? COLORS.PRIMARY;
 
           return (
             <View key={goalItem.id} style={styles.goalCheckinRow}>
               <Text style={styles.goalName}>{goalItem.label}</Text>
 
-              {/* Botón modular que maneja la interacción visual del check/uncheck */}
               <SimpleCheckinButton
                 hasCheckedInToday={doneToday}
                 categoryColor={categoryColor}
-                onCheckin={() => onCheckin(goalItem.id)}
+                onCheckin={() => {
+                  if (!doneToday) {
+                    onCheckin(goalItem.id);
+                  }
+                }}
               />
             </View>
           );
@@ -89,7 +114,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-    // Línea divisoria sutil entre filas
     borderBottomWidth: 1,
     borderColor: COLORS.BORDER_COLOR,
   },
