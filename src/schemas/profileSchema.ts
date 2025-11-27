@@ -4,7 +4,7 @@ const DEFAULT_REQUIRED_MESSAGE = "Este campo es obligatorio";
 
 export const ProfileSchema = z.object({
 
-    avatarURL: z.string().optional()
+    avatarUrl: z.string().optional()
         .refine(value => {
             if (value) {
                 return value.trim().length > 0;
@@ -23,14 +23,10 @@ export const ProfileSchema = z.object({
         }),
         
     fullName: z.string().min(1, DEFAULT_REQUIRED_MESSAGE),
-
-    email: z
-        .string().min(1, { message: 'Ingrese un correo electrónico' })
-        .email("Ingresa un correo válido"),
         
     bio: z
-        .string()
-        .max(150, { message: "La biografía no puede exceder los 150 caracteres" }).optional(),
+        .string().min(1, DEFAULT_REQUIRED_MESSAGE)
+        .max(150, { message: "La biografía no puede exceder los 150 caracteres" }),
 }); 
 
     

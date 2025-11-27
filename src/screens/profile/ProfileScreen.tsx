@@ -1,19 +1,24 @@
-import React from 'react';
+// src/screens/profile/ProfileScreen.tsx
+
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { LogOut, Settings, Bell, Users, Award } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { LogOut, Award } from 'lucide-react-native';
 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Profile } from '../../types/user';
+import { BackendProfile, BackendUser, getMe, getMyProfile } from '../../services/userApi';
 
-// TIPOS
 interface ProfileScreenProps {
   user?: Partial<Profile> & {
     email: string;
@@ -27,13 +32,6 @@ interface ProfileScreenProps {
   onLogout: () => void;
   onNavigate: (route: string) => void;
 }
-
-// MENÚ
-const OPTIONS_MENU = [
-  { title: 'Configuración', icon: Settings, route: 'Settings' },
-  { title: 'Recordatorios', icon: Bell, route: 'Reminders' },
-  { title: 'Invitar Amigos', icon: Users, route: 'InviteFriends' },
-];
 
 const getInitials = (fullName: string): string => {
   if (!fullName) return 'U';
@@ -54,28 +52,100 @@ const formatMemberSince = (date?: Date) => {
   }
 };
 
-// PROFILE SCREEN (DENTRO DE MAINLAYOUT)
 export function ProfileScreen({
   user,
   stats,
   onLogout,
   onNavigate,
 }: ProfileScreenProps) {
-  const userData = user ?? {
-    fullName: 'Usuario Anónimo',
-    email: 'usuario@example.com',
-    createdAt: new Date(),
-    avatarURL: null,
-  };
+  const [me, setMe] = useState<BackendUser | null>(null);
+  const [profile, setProfile] = useState<BackendProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // 🔹 Cargar /users/me y /users/me/profile cada vez que la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          setErrorMsg(null);
+
+          const [meRes, profileRes] = await Promise.all([
+            getMe(),
+            getMyProfile(),
+          ]);
+
+          if (!isActive) return;
+
+          setMe(meRes);
+          setProfile(profileRes);
+        } catch (err) {
+          if (!isActive) return;
+          console.log('Error cargando perfil', err);
+          setErrorMsg('No se pudo cargar tu perfil.');
+        } finally {
+          if (isActive) setLoading(false);
+        }
+      };
+
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  // ---------- Datos combinados (API + props como fallback) ----------
+
+  // Datos de profile si existen
+  const fullNameFromProfile = profile?.fullName ?? undefined;
+  const avatarFromProfile = profile?.avatarUrl ?? undefined;
+  const bioFromProfile = profile?.bio ?? undefined;
+
+  // Nombre a mostrar: fullName > username > email > "Usuario"
+  const displayName: string =
+    fullNameFromProfile ??
+    user?.fullName ??
+    me?.username ??
+    user?.email ??
+    'Usuario';
+
+  const email: string = me?.email ?? user?.email ?? 'usuario@example.com';
+
+  const effectiveCreatedAt: Date = me?.createdAt
+    ? new Date(me.createdAt)
+    : user?.createdAt ?? new Date();
+
+  // Avatar: primero del profile, luego el que venía por props
+  const avatarURI: string = avatarFromProfile ?? user?.avatarURL ?? '';
+
+  const hasImage = !!avatarURI;
+
+  // Bio: primero del profile del backend, luego cualquier bio que venga por props
+  const bio: string | undefined =
+    bioFromProfile ?? (user as any)?.bio ?? undefined;
+
+  const initials = getInitials(displayName);
 
   const userStats = {
     achievements: stats?.achievements ?? 0,
     longestStreak: stats?.longestStreak ?? 0,
   };
 
-  const initials = getInitials(userData.fullName || '');
-  const avatarURI = userData.avatarURL || '';
-  const hasImage = !!avatarURI;
+  const handleLogoutPress = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Cerrar sesión',
+        style: 'destructive',
+        onPress: onLogout,
+      },
+    ]);
+  };
 
   return (
     <MainLayout
@@ -93,15 +163,29 @@ export function ProfileScreen({
             {hasImage ? (
               <AvatarImage source={{ uri: avatarURI }} />
             ) : (
-              <AvatarFallback fullName={userData.fullName || initials} />
+              <AvatarFallback fullName={displayName || initials} />
             )}
           </Avatar>
 
-          <Text style={styles.userName}>{userData.fullName}</Text>
-          <Text style={styles.userEmail}>{userData.email}</Text>
+          {loading && (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+              <Text style={styles.loadingText}>Cargando perfil...</Text>
+            </View>
+          )}
+
+          {errorMsg && !loading && (
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          )}
+
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userEmail}>{email}</Text>
           <Text style={styles.memberSince}>
-            {formatMemberSince(userData.createdAt)}
+            {formatMemberSince(effectiveCreatedAt)}
           </Text>
+
+          {/* Bio solo si existe */}
+          {bio && <Text style={styles.userBio}>{bio}</Text>}
 
           <TouchableOpacity
             style={styles.editButton}
@@ -134,28 +218,9 @@ export function ProfileScreen({
 
         {/* --- 3. MENÚ --- */}
         <View style={styles.menuContainer}>
-          {OPTIONS_MENU.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => onNavigate(item.route)}
-              >
-                <Icon
-                  size={20}
-                  color={COLORS.TEXT_PRIMARY}
-                  style={styles.menuIcon}
-                />
-                <Text style={styles.menuText}>{item.title}</Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          {/* 🔴 CERRAR SESIÓN 🔴   */}
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutButton]}
-            onPress={onLogout}
+            onPress={handleLogoutPress}
           >
             <LogOut
               size={20}
@@ -181,11 +246,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
-  // Header
   profileHeader: {
     alignItems: 'center',
     marginBottom: 30,
     width: '100%',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  loadingText: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: COLORS.TEXT_MUTED,
+  },
+  errorText: {
+    fontSize: 12,
+    color: COLORS.ERROR_TEXT,
+    marginTop: 4,
+    marginBottom: 4,
   },
   userName: {
     fontSize: 20,
@@ -197,24 +278,19 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 14,
     color: COLORS.TEXT_MUTED,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   memberSince: {
     fontSize: 12,
     color: COLORS.PRIMARY,
-    marginBottom: 16,
+    marginBottom: 8,
   },
-  editButton: {
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_COLOR,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  editButtonText: {
-    fontSize: 14,
+  userBio: {
+    fontSize: 13,
     color: COLORS.TEXT_PRIMARY,
-    fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
 
   // Stats
@@ -237,6 +313,15 @@ const styles = StyleSheet.create({
   },
   statIconWrapper: {
     marginBottom: 6,
+  },
+  editButton: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  editButtonText: {
+    color: COLORS.BACKGROUND_DEFAULT,
+    fontWeight: '600',
   },
   statValue: {
     fontSize: 28,
@@ -273,10 +358,6 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     marginRight: 14,
-  },
-  menuText: {
-    fontSize: 16,
-    color: COLORS.TEXT_PRIMARY,
   },
   logoutButton: {
     backgroundColor: COLORS.BACKGROUND_DEFAULT,

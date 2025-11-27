@@ -6,6 +6,9 @@ import { BottomNavigationBar } from './navBar';
 
 
 import ProfileScreen from '../../screens/profile/ProfileScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout as apiLogout } from '../../services/authApi';
+import { useNavigation } from '@react-navigation/native';
 
 import { RootTabParamList } from './types';
 import MessagesStack from './MessagesStack';
@@ -14,10 +17,41 @@ import { CreateGoalScreen } from '../../screens/goals/CreateGoalScreen';
 import HomeScreen from '../../screens/home/HomeScreen';
 import { Home } from 'lucide-react-native';
 import HomeStackNavigator from './HomeStack';
+import { ProfileScreenContainer } from '../../screens/profile/ProfileScreenContainer';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function MainTabs() {
+  const navigation = useNavigation();
+
+  async function logoutFunction() {
+    try {
+      // call backend logout if available
+      await apiLogout();
+    } catch (e) {
+      // ignore network errors but log
+      console.warn('api logout failed', e);
+    }
+
+    try {
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'currentUser']);
+    } catch (e) {
+      console.warn('clear storage failed', e);
+    }
+
+    // Reset navigation to the auth/login screen. If the root navigator registers a 'Login'
+    // route this will move the user there. Use a best-effort approach.
+    try {
+      (navigation as any).reset({ index: 0, routes: [{ name: 'Login' }] });
+    } catch (e) {
+      // Fallback: try navigate
+      try {
+        (navigation as any).navigate('Login');
+      } catch (err) {
+        console.warn('navigation to Login failed', err);
+      }
+    }
+  }
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
@@ -37,12 +71,10 @@ export default function MainTabs() {
       </Tab.Screen>
       <Tab.Screen name="Stats" component={StatsScreen} />
       <Tab.Screen name="Profile">
-        {() => (
-          <ProfileScreen
-            user={undefined as any}
-            stats={{ achievements: 0, longestStreak: 0 }}
-            onLogout={() => {}}
-            onNavigate={() => {}}
+        {(props) => (
+          <ProfileScreenContainer
+            {...props}
+            onLogout={logoutFunction}
           />
         )}
       </Tab.Screen>
