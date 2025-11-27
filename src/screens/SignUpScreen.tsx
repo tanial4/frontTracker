@@ -21,6 +21,9 @@ import { Button } from '../components/ui/button';
 import { SignupSchema, SignUpFormType } from '../schemas/signUpSchema';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signup } from '../services/authApi';
+
 interface SignupScreenProps {
   onSignup?: (data: SignUpFormType) => void;
   onSignupSuccess?: () => void;
@@ -42,7 +45,6 @@ export function SignupScreen({
       username: '',
       email: '',
       password: '',
-      confirmPassword: '',
     },
     mode: 'onBlur',
   });
@@ -52,16 +54,53 @@ export function SignupScreen({
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = (data: SignUpFormType) => {
-    console.log('Datos de Registro:', data);
-    if (onSignup) {
-      onSignup(data);
-    } else if (onSignupSuccess) {
-      onSignupSuccess();
-    } else if (onSwitchToLogin) {
-      onSwitchToLogin();
-    } else if (navigation) {
-      navigation.replace('Login');
+const onSubmit = async (data: SignUpFormType) => {
+    try {
+      console.log('Datos de Registro:', data);
+
+      // Si el padre pasó un handler custom, lo usamos y no tocamos API
+      if (onSignup) {
+        onSignup(data);
+        return;
+      }
+
+      // 🔐 Llamada real a Nest
+      const res = await signup({
+        username: data.username,      // mapeo username -> name
+        email: data.email,
+        password: data.password,
+      });
+
+      // Si tu backend devuelve tokens en /auth/signup, los guardamos
+      if (res.accessToken && res.refreshToken) {
+        await AsyncStorage.setItem('accessToken', res.accessToken);
+        await AsyncStorage.setItem('refreshToken', res.refreshToken);
+
+        // callback opcional
+        if (onSignupSuccess) onSignupSuccess();
+
+        // Ir directo al app (como en LoginScreen)
+        if (navigation) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' }],
+          });
+        }
+        return;
+      }
+
+      // Si NO devuelve tokens, asumimos que solo crea el user
+      // y mandamos a Login o callback
+      if (onSignupSuccess) {
+        onSignupSuccess();
+      } else if (onSwitchToLogin) {
+        onSwitchToLogin();
+      } else if (navigation) {
+        navigation.replace('Login');
+      }
+    } catch (err: any) {
+      console.error('Error en signup', err?.response?.data || err.message);
+      // Aquí puedes poner un Alert / toast
     }
   };
 
@@ -112,12 +151,7 @@ export function SignupScreen({
                   isPassword
                   placeholder="Mínimo 6 caracteres"
                 />
-                <FormInput
-                  name="confirmPassword"
-                  label="Confirmar contraseña"
-                  isPassword
-                  placeholder="Confirma tu contraseña"
-                />
+                
 
                 <Button
                   onPress={handleSubmit(onSubmit)}

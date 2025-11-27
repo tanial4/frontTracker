@@ -14,10 +14,8 @@ import {
 
 import { BRAND_COLORS as COLORS } from './src/styles/Colors';
 
-// Screens
-import HomeScreen from './src/screens/home/HomeScreen';
 import StatsScreen from './src/screens/stats/StatsScreen';
-import ProfileScreen from './src/screens/profile/ProfileScreen';
+;
 import MessagesStackNavigator from './src/components/navigation/MessagesStack';
 
 
@@ -33,6 +31,7 @@ import { MOCK_USERS, MOCK_PROFILES } from './src/data/TestUserData';
 import { RootTabParamList } from './src/components/navigation/types';
 import RankingsScreen from './src/screens/rankings/RankingScreen';
 import ProfileStackNavigator from './src/components/navigation/ProfileStack';
+import HomeStackNavigator from './src/components/navigation/HomeStack';
 import StatsStackNavigator from './src/components/navigation/StatsStack';
 
 // ------------------------
@@ -78,7 +77,7 @@ function AppTabs({
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           title: 'Inicio',
           tabBarIcon: ({ color, size }) => (

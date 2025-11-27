@@ -9,7 +9,7 @@ import CreateGoalScreen from '../../screens/goals/CreateGoalScreen';
 // 🧠 Rutas internas del stack de Home
 export type HomeStackParamList = {
   HomeMain: undefined;
-  CreateGoal: undefined;
+  CreateGoalScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -22,7 +22,7 @@ export function HomeStackNavigator() {
       }}
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} />
-      <Stack.Screen name="CreateGoal" component={CreateGoalScreen} />
+      <Stack.Screen name="CreateGoalScreen" component={CreateGoalScreen} />
     </Stack.Navigator>
   );
 }

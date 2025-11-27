@@ -17,7 +17,7 @@ import { FormDate } from './FormDate';
 // Si no, devolvemos valores por defecto limpios.
 const getFormDefaults = (template?: GoalTemplate): GoalFormType => {
   return {
-    name: template?.title || '',
+    title: template?.title || '',
     description: template?.description || '',
     categoryId: template?.categoryId || '',
     // Aseguramos que el tipo de objetivo sea válido según nuestras opciones de UI
@@ -29,7 +29,7 @@ const getFormDefaults = (template?: GoalTemplate): GoalFormType => {
     endDate: new Date(),
   };
 };
-
+ 
 interface CreateGoalFormProps {
   onCancel: () => void;
   // Pasamos todos los métodos del hook useForm desde el componente padre
@@ -41,7 +41,7 @@ interface CreateGoalFormProps {
 
 export function CreateGoalForm({
   onCancel,
-  allCategories,
+
   initialTemplate,
   methods,
   onCreate,

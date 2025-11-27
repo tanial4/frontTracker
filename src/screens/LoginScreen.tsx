@@ -3,9 +3,7 @@
 import React from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
+  Text,  SafeAreaView,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
@@ -20,6 +18,8 @@ import { FormInput } from '../components/forms/formInput';
 import { Button } from '../components/ui/button';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';
 import { LoginFormType, LoginSchema } from '../schemas/logInSchema';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { login } from '../services/authApi';
 
 // Ajusta estos imports al nombre real de tu schema de login
 
@@ -32,7 +32,6 @@ interface LoginScreenProps {
 
 export function LoginScreen({
   onLogin,
-  onDemoLogin,
   onSwitchToSignup,
 }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
@@ -51,9 +50,14 @@ export function LoginScreen({
     formState: { isSubmitting },
   } = methods;
 
-  const handleLoginSubmit = (data: LoginFormType) => {
+  const handleLoginSubmit =async (data: LoginFormType) => {
     console.log('Login data:', data);
     // Aquí luego harás tu llamada al backend
+
+    const res = await login(data.email, data.password);
+    await AsyncStorage.setItem('accessToken', res.accessToken);
+    await AsyncStorage.setItem('refreshToken', res.refreshToken);
+
     onLogin(); // RootNavigator se encarga de cambiar isAuthenticated
   };
 
@@ -122,20 +126,6 @@ export function LoginScreen({
                 </Text>
               </Text>
             </View>
-          </View>
-
-          {/* DEMO CARD */}
-          <View style={styles.demoCard}>
-            <Text style={styles.demoTitle}>
-              ¿Solo quieres probar la app?
-            </Text>
-
-            <Button
-              style={styles.demoButton}
-              onPress={onDemoLogin}
-            >
-              <Text style={styles.demoButtonText}>Entrar en modo demo</Text>
-            </Button>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

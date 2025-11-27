@@ -12,7 +12,6 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { RootTabParamList } from '../../components/navigation/types';
 
 import { MainLayout } from '../../components/layout/MainLayout';
-import { CATEGORY_COLORS_MAP, BRAND_COLORS as COLORS } from '../../styles/Colors';
 
 import { MOCK_USERS } from '../../data/TestUserData';
 import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from '../../data/TestGoalsData';
@@ -22,8 +21,7 @@ import { buildGoalProgressForUser } from '../../lib/goalProgress';
 import HomeGoalsSection from '../../components/home/HomeGoalsSection';
 import HomeTodayCheckins from '../../components/home/HomeTodayCheckins';
 import { Button } from '../../components/ui/button';
-import { hasCheckinToday } from '../../lib/checkInHelpers';
-import SimpleCheckinButton from '../../components/goals/simpleCheckinCard';
+import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 
 
 type HomeNavProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
@@ -73,7 +71,7 @@ export function HomeScreen() {
   };
 
   const handleGoToCreateGoal = () => {
-    (navigation as any).navigate('CreateGoal');
+    (navigation as any).navigate('CreateGoalScreen');
   };
 
   // Metas visibles en el gráfico (máx 6) — la misma lista será usada para los checkins
@@ -112,7 +110,7 @@ export function HomeScreen() {
             <HomeGoalsSection
               allItems={goalProgressItems}
               visibleItems={visibleGoals}
-              selectedIds={selectedGoalIds}
+              selectedIds={selectedGoalIds} 
               onToggle={handleToggleGoal}
               maxSelected={MAX_SELECTED}
               onCreate={handleGoToCreateGoal}
