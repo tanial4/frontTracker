@@ -13,10 +13,9 @@ import { RootTabParamList } from '../../components/navigation/types';
 
 import { MainLayout } from '../../components/layout/MainLayout';
 
-import { MOCK_GOALS, MOCK_GOAL_CHECKINS } from '../../data/TestGoalsData';
+
 import { MOCK_CATEGORIES } from '../../data/Categories';
 
-import { buildGoalProgressForUser } from '../../lib/goalProgress';
 import HomeGoalsSection from '../../components/home/HomeGoalsSection';
 import HomeTodayCheckins from '../../components/home/HomeTodayCheckins';
 import { Button } from '../../components/ui/button';
@@ -26,7 +25,51 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { getMe, PublicUser } from '../../services/authApi'; // ajusta la ruta real
 import { listGoals,GoalResponse } from '../../services/goalsApi';
 
-type FrontGoal = (typeof MOCK_GOALS)[number]
+import {GoalCheckinResponse,createGoalCheckin, listCheckinsForGoal,} from "../../services/checkinsApi"
+
+
+
+import type { GoalTargetType } from '../../services/goalsApi'; // o repetir el union
+import { getGoalProgress, GoalProgressResponse } from '../../services/statsApi';
+
+type FrontGoal = {
+  id: string;
+  title: string;
+  description?: string | null;
+  categoryId?: string | null;
+  targetType: GoalTargetType;
+  targetValue?: number | null;
+  startDate: Date;
+  endDate: Date | null;
+  isArchived: boolean;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+  };
+};
+
+type GoalProgressItem = {
+  id: string;
+  label: string;
+  percentage: number; // 0–100
+  color: string;
+  categoryId?: string | null;
+};
+
+
+type FrontCheckin = {
+  id: string;
+  goalId: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+  };
+  date: Date;
+  value?: number | null;
+  done: boolean;
+};
 
 type HomeNavProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
 
@@ -39,6 +82,10 @@ export function HomeScreen() {
   const [selectedGoalIds, setSelectedGoalIds] = useState<string[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const [realGoals, setRealGoals] = useState<GoalResponse[]>([]);
+  const [realCheckins, setRealCheckins] = useState<GoalCheckinResponse[]>([]);
+  const [goalStats, setGoalStats] = useState<Record<string, GoalProgressResponse>>({});
+
+
 
   // 1) Obtener /auth/me al montar
   useEffect(() => {
@@ -56,7 +103,40 @@ export function HomeScreen() {
     fetchMe();
   }, []);
 
-    useEffect(() => {
+  //Estadisticas
+
+  useEffect(() => {
+  if (!currentUser) return;
+  if (realGoals.length === 0) return;
+
+  const fetchStats = async () => {
+    try {
+      // opcional: definir explícitamente un rango, o dejar que el back use el default (últimos 30 días)
+      const now = new Date();
+      const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
+      const fromDate = new Date();
+      fromDate.setDate(now.getDate() - 30);
+      const from = fromDate.toISOString().slice(0, 10);
+
+      const entries = await Promise.all(
+        realGoals.map(async (g) => {
+          const stats = await getGoalProgress(g.id, { from, to });
+          return [g.id, stats] as const;
+        })
+      );
+
+      setGoalStats(Object.fromEntries(entries));
+      console.log('Stats desde backend:', entries);
+    } catch (err) {
+      console.error('Error al cargar stats de metas', err);
+    }
+  };
+
+  fetchStats();
+}, [currentUser, realGoals]);
+
+
+  useEffect(() => {
     if (!currentUser) return; // todavía no sabemos quién es
 
     const fetchGoals = async () => {
@@ -72,9 +152,58 @@ export function HomeScreen() {
     fetchGoals();
   }, [currentUser]);
 
-  const goalsForProgress = useMemo<FrontGoal[]>(() => {
+  useEffect(() => {
+  if (!currentUser) return;
+  if (realGoals.length === 0) return;
+
+  const fetchAllCheckins = async () => {
+    try {
+      const allByGoal = await Promise.all(
+        realGoals.map((g) => listCheckinsForGoal(g.id))
+      );
+      const all = allByGoal.flat();
+      setRealCheckins(all);
+      console.log('Checkins globales desde backend:', all);
+    } catch (error) {
+      console.error('Error al obtener historial de checkins:', error);
+    }
+  };
+
+  fetchAllCheckins();
+}, [currentUser, realGoals])
+
+const checkinsForProgress = useMemo<FrontCheckin[]>(() => {
   if (!currentUser) return [];
 
+  return realCheckins.map((c) => {
+    return {
+      id: c.id,
+      goalId: c.goalId,
+      user: {
+        id: c.userId,                // 👈 importantísimo
+        email: currentUser.email,    // no lo usa el cálculo, pero no estorba
+        username: currentUser.username,
+      },
+      date: new Date(c.date),
+      value: c.value ?? null,
+      done: c.done,
+    };
+  });
+}, [realCheckins, currentUser]);
+
+const todayCheckinsForUi = useMemo<FrontCheckin[]>(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return checkinsForProgress.filter((c) => {
+    const d = new Date(c.date as any);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  });
+}, [checkinsForProgress]);
+
+  const goalsForProgress = useMemo<FrontGoal[]>(() => {
+  if (!currentUser) return [];
   return realGoals.map((g) => {
     return {
       ...(g as any),
@@ -91,15 +220,37 @@ export function HomeScreen() {
 }, [realGoals, currentUser]);
 
   // 2) Construir progreso de metas SOLO cuando ya tengamos usuario
-  const goalProgressItems = useMemo(() => {
-    if (!currentUser) return [];
-    return buildGoalProgressForUser(
-      currentUser.id,       // 👈 equivalente a CURRENT_USER_ID
-      goalsForProgress,
-      MOCK_GOAL_CHECKINS,
-      MOCK_CATEGORIES
-    );
-  }, [currentUser,goalsForProgress]);
+const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
+  if (!currentUser) return [];
+  if (realGoals.length === 0) return [];
+
+  return realGoals.map((goal) => {
+    const category = MOCK_CATEGORIES.find((c) => c.id === goal.categoryId);
+    const stats = goalStats[goal.id];
+
+    let percentage = 0;
+
+    if (stats) {
+      if (stats.completion !== null && stats.completion !== undefined) {
+        // el back ya calculó completion normalizado 0–1
+        percentage = stats.completion * 100;
+      } else if (stats.totalCheckins > 0) {
+        // fallback: porcentaje de checkins marcados como "hechos"
+        percentage = (stats.doneCount / stats.totalCheckins) * 100;
+      }
+    }
+
+    return {
+      id: goal.id,
+      label: goal.title,
+      percentage,
+      color: category?.color ?? '#6C5CE7',
+      categoryId: goal.categoryId ?? null,
+    };
+  });
+}, [currentUser, realGoals, goalStats]);
+
+
 
   // 3) Inicializar selección con las primeras metas
   useEffect(() => {
@@ -183,15 +334,33 @@ export function HomeScreen() {
               maxSelected={MAX_SELECTED}
               onCreate={handleGoToCreateGoal}
             />
-
+            
             <HomeTodayCheckins
               visibleItems={visibleGoals}
-              allGoals={MOCK_GOALS}
+              allGoals={goalsForProgress}
               allCategories={MOCK_CATEGORIES}
-              allCheckins={MOCK_GOAL_CHECKINS}
-              currentUserId={currentUser?.id ?? ''} // por ahora
-              onCheckin={(goalId) => {
-                console.log('Check-in realizado para meta:', goalId);
+              allCheckins={todayCheckinsForUi}
+              currentUserId={currentUser?.id ?? ''}
+              onCheckin={async (goalId) => {       // 👈 AQUÍ va el async
+                try {
+                // 1️⃣ Buscar la meta real por ID
+                const goal = realGoals.find((g) => g.id === goalId);
+                if (!goal) {
+                  console.warn('Meta no encontrada para check-in', goalId);
+                  return;
+                }
+
+                const newCheckin = await createGoalCheckin(goal);
+
+                setRealCheckins((prev) => [...prev, newCheckin]);
+
+                // Esto recalcula:
+                // - checkinsForProgress
+                // - goalProgressItems
+                // => gráfica y lista de hoy se actualizan
+              } catch (err: any) {
+                console.error('Error al hacer check-in:', err?.response?.data ?? err);
+              }
               }}
             />
           </>
