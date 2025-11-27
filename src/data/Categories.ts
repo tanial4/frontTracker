@@ -1,6 +1,6 @@
 // src/data/mockCategoryData.ts
 
-import { label } from '../components/ui/label';
+
 import { ActivityCategory, Goal } from '../types/goal';
 import { BRAND_COLORS as COLORS } from '../styles/Colors';// Solo para tipo de referencia
 
@@ -84,7 +84,7 @@ export const CATEGORIES = [
     { label: 'Pomodoro', value: 'cat-pomo' },
     { label: 'Ejercicio', value: 'cat-ex' },
     { label: 'Estudio', value: 'cat-study' },
-    { label: 'Lectura', value: 'cat-read' },
+    { label: 'Lectura', value: 'cmidyflo30000wi7sd8yec8xo' },
     { label: 'Meditación', value: 'cat-med' },
     { label: 'Agua', value: 'cat-water' },
     { label: 'Salud', value: 'cat-health' },

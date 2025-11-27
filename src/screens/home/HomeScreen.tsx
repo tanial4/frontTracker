@@ -110,7 +110,7 @@ export function HomeScreen() {
             <HomeGoalsSection
               allItems={goalProgressItems}
               visibleItems={visibleGoals}
-              selectedIds={selectedGoalIds}
+              selectedIds={selectedGoalIds} 
               onToggle={handleToggleGoal}
               maxSelected={MAX_SELECTED}
               onCreate={handleGoToCreateGoal}

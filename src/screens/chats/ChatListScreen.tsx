@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { MessageCircleDashed, MessageCirclePlus, UserPlus } from 'lucide-react-native';
+import { MessageCircleDashed, MessageCirclePlus } from 'lucide-react-native';
 
 import { BRAND_COLORS, BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { MainLayout } from '../../components/layout/MainLayout';
