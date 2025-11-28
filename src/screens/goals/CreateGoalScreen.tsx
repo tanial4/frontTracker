@@ -23,12 +23,12 @@ import { GoalSchema, GoalFormType } from '../../schemas/createGoalSchema';
 
 import { GOAL_TEMPLATES } from '../../data/GoalsTypes';
 import {  ActivityCategory, GoalTemplate } from '../../types/goal';
-import { RouteStackHomeParamList } from '../../components/navigation/types';
+import { RouteStackHomeParamList, RouteStackStatsParamList } from '../../components/navigation/types';
 import { createGoal } from '../../services/goalsApi';
 import TemplateCard from '../../components/goals/templateGoaldCard';
 import { CategoryResponse, listCategories } from '../../services/categoriesApi';
 
-type HomeNavProp = BottomTabNavigationProp<RouteStackHomeParamList, 'HomeMain'>;
+type HomeNavProp = BottomTabNavigationProp<RouteStackStatsParamList, 'StatsMain'>;
 
 interface CreateGoalScreenProps {
   onGoBack?: () => void;
@@ -92,7 +92,7 @@ const allCategoriesTyped: ActivityCategory[] = categories.map((c) => ({
     if (onGoBack) {
       onGoBack();
     } else {
-      navigation.navigate('HomeMain');
+      navigation.navigate('StatsMain');
     }
   };
 
@@ -132,7 +132,7 @@ const allCategoriesTyped: ActivityCategory[] = categories.map((c) => ({
       onGoalCreated(data);
     }
 
-    navigation.navigate('HomeMain');
+    navigation.navigate('StatsMain');
   } catch (error: any) {
     console.error(
       'Error creando meta:',

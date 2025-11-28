@@ -1,48 +1,70 @@
 // src/components/streaks/StreakCard.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
-import { Flame } from 'lucide-react-native'; 
+import { Flame, Users } from 'lucide-react-native';
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { Button } from '../ui/button';
 import { StreakUI } from '../../types/streak';
+import { recordStreakCheckin } from '../../services/streakApi';
+
 
 interface StreakCardProps {
-  // Objeto de datos que representa la racha
+  // Objeto de datos que representa la racha (adaptado a UI)
   streak: StreakUI;
-  // Acción al presionar el botón principal (navegar al detalle)
+  // Antes navegaba al detalle; ahora ya no se usa dentro del botón,
+  // pero lo dejamos por compatibilidad (por si luego quieres usarlo en otro lado).
   onContinue: (streakId: string) => void;
 }
 
-// Componente de tarjeta para mostrar el resumen de una Racha (Streak).
-// Se diferencia visualmente de las Metas normales por el uso del icono de "Fuego" y métricas de grupo.
+/**
+ * Tarjeta para mostrar el resumen de una Racha (Streak).
+ * Ahora el botón principal se usa para hacer check-in del día actual
+ * llamando al endpoint /streaks/:id/checkins sin cambiar de pantalla.
+ */
 export function StreakCard({ streak, onContinue }: StreakCardProps) {
-  const {
-    id,
-    name,
-    description,
-    categoryColor,
-    isJoined,
-    membersCount,
-    currentStreakDays,
-  } = streak;
+  const { id, name, description, isJoined, membersCount, currentStreakDays } = streak;
 
-  // Definición del color temático.
-  // Si la categoría no tiene color, usamos el primario de la marca por defecto.
-  const accent = categoryColor ?? COLORS.PRIMARY;
+  // Color principal de la racha en la UI
+  const accent = COLORS.PRIMARY;
+  // Estado local para indicar cuando el check-in está en progreso
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+
+  // Handler del botón: hace check-in para HOY y no navega
+  const handleCheckinPress = async () => {
+    try {
+      setIsCheckingIn(true);
+
+      const todayIso = new Date().toISOString();
+
+      await recordStreakCheckin(id, {
+        date: todayIso,
+        done: true,
+        // metadata: { source: 'stats-screen' }, // opcional
+      });
+
+      // Aquí podrías disparar un callback/refresh externo si quieres
+      // por ejemplo: onContinue(id) solo para refrescar datos, sin navegar.
+      // Por ahora NO lo llamamos para asegurar que no cambie de pantalla.
+      console.log(`Check-in registrado para streak ${id} en ${todayIso}`);
+    } catch (error: any) {
+      console.error(
+        'Error haciendo check-in de racha:',
+        error?.response?.data || error.message || error,
+      );
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
 
   return (
-    // El borde de la tarjeta toma el color de acento para identificar la categoría rápidamente
     <View style={[styles.card, { borderColor: accent }]}>
-      
-      {/* --- HEADER: Icono y Estado --- */}
+      {/* HEADER: Icono y estado */}
       <View style={styles.topRow}>
-        {/* Contenedor del icono con fondo tintado (20% opacidad del color acento) */}
         <View
           style={[
             styles.iconWrapper,
@@ -52,7 +74,6 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
           <Flame size={22} color={accent} />
         </View>
 
-        {/* Badge "Activa": Solo se muestra si el usuario ya se unió a esta racha */}
         {isJoined && (
           <View
             style={[
@@ -67,7 +88,7 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
         )}
       </View>
 
-      {/* --- CONTENIDO: Título y Descripción --- */}
+      {/* CONTENIDO: título y descripción */}
       <Text style={styles.title}>{name}</Text>
 
       {!!description && (
@@ -76,29 +97,30 @@ export function StreakCard({ streak, onContinue }: StreakCardProps) {
         </Text>
       )}
 
-      {/* --- MÉTRICAS: Días y Miembros --- */}
+      {/* MÉTRICAS: días de racha y miembros */}
       <View style={styles.statsRow}>
-        {/* Días acumulados (destacado en color) */}
         {typeof currentStreakDays === 'number' && (
           <Text style={[styles.highlightText, { color: accent }]}>
-            {currentStreakDays} días
+            {currentStreakDays} días de racha
           </Text>
         )}
 
-        {/* Contador de participantes */}
         <View style={styles.membersWrapper}>
-          {/* Icono de texto simple para ahorrar imports, se puede cambiar por icono SVG si se prefiere */}
-          <Text style={styles.membersIcon}>👥</Text>
+          <Users size={16} color={COLORS.TEXT_MUTED} />
           <Text style={styles.membersText}>{membersCount} miembros</Text>
         </View>
       </View>
 
-      {/* --- BOTÓN DE ACCIÓN --- */}
+      {/* BOTÓN: ahora hace check-in del día actual */}
       <Button
         style={[styles.goButton, { backgroundColor: accent }]}
-        onPress={() => onContinue(id)}
+        onPress={handleCheckinPress}
+        isLoading={isCheckingIn}
+        disabled={isCheckingIn}
       >
-        <Text style={styles.goButtonText}>Ver racha</Text>
+        <Text style={styles.goButtonText}>
+          {isCheckingIn ? 'Guardando...' : 'Hacer check-in'}
+        </Text>
       </Button>
     </View>
   );
@@ -114,7 +136,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     backgroundColor: COLORS.BACKGROUND_DEFAULT,
-    // Sombras sutiles para elevación
     shadowColor: COLORS.BLACK,
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -158,7 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // Sección de Métricas
+  // Métricas
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -172,10 +193,7 @@ const styles = StyleSheet.create({
   membersWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  membersIcon: {
-    fontSize: 14,
-    marginRight: 4,
+    gap: 4,
   },
   membersText: {
     fontSize: 13,

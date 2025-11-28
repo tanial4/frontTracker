@@ -25,7 +25,7 @@ import StatsStreaksSection from '../../components/stats/StatsStreaksSection';
 // navegación tipada para esta pantalla dentro del stack
 import { StatsStackParamList } from '../../components/navigation/StatsStack';
 
-// 👇 nuevos imports: servicios reales
+// servicios reales
 import { getMe, PublicUser } from '../../services/authApi';
 import { listGoals, GoalResponse, GoalTargetType } from '../../services/goalsApi';
 import {
@@ -99,9 +99,10 @@ export function StatsScreen() {
     Record<string, GoalProgressResponse>
   >({});
 
+  // Segmento activo: metas o rachas
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('goals');
 
-  // ids seleccionados para la gráfica
+  // ids seleccionados para la gráfica de progreso
   const [selectedGoalIds, setSelectedGoalIds] = useState<string[]>([]);
 
   // 1) /auth/me
@@ -159,37 +160,36 @@ export function StatsScreen() {
   }, [currentUser, realGoals]);
 
   // 4) /stats/goals/:id/progress
-useEffect(() => {
-  if (!currentUser) return;
-  if (realGoals.length === 0) return;
+  useEffect(() => {
+    if (!currentUser) return;
+    if (realGoals.length === 0) return;
 
-  const fetchStats = async () => {
-    try {
-      const now = new Date();
-      const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
-      const fromDate = new Date();
-      fromDate.setDate(now.getDate() - 30);
-      const from = fromDate.toISOString().slice(0, 10);
+    const fetchStats = async () => {
+      try {
+        const now = new Date();
+        const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
+        const fromDate = new Date();
+        fromDate.setDate(now.getDate() - 30);
+        const from = fromDate.toISOString().slice(0, 10);
 
-      const entries = await Promise.all(
-        realGoals.map(async (g) => {
-          const stats = await getGoalProgress(g.id, { from, to });
-          console.log('Stats goal', g.id, g.title, stats); // 👈 LOG
-          return [g.id, stats] as const;
-        })
-      );
+        const entries = await Promise.all(
+          realGoals.map(async (g) => {
+            const stats = await getGoalProgress(g.id, { from, to });
+            console.log('Stats goal', g.id, g.title, stats);
+            return [g.id, stats] as const;
+          })
+        );
 
-      const statsMap = Object.fromEntries(entries);
-      console.log('Stats map en StatsScreen:', statsMap); // 👈 LOG
-      setGoalStats(statsMap);
-    } catch (err) {
-      console.error('Error al cargar stats de metas en StatsScreen', err);
-    }
-  };
+        const statsMap = Object.fromEntries(entries);
+        console.log('Stats map en StatsScreen:', statsMap);
+        setGoalStats(statsMap);
+      } catch (err) {
+        console.error('Error al cargar stats de metas en StatsScreen', err);
+      }
+    };
 
-  fetchStats();
-}, [currentUser, realGoals]);
-
+    fetchStats();
+  }, [currentUser, realGoals]);
 
   // 5) Adaptar metas y checkins al formato que usan los helpers/UI de stats
   const goalsForUi = useMemo<FrontGoal[]>(() => {
@@ -235,9 +235,9 @@ useEffect(() => {
 
       if (stats && stats.completion !== null && stats.completion !== undefined) {
         // completion viene 0–1 desde el backend (global)
-        percentage = Math.round(stats.completion * 100)
+        percentage = Math.round(stats.completion * 100);
       }
-        
+
       return {
         id: goal.id,
         label: goal.title,
@@ -279,7 +279,7 @@ useEffect(() => {
   const streakItems = MOCK_STREAKS_UI;
   const hasStreaks = streakItems.length > 0;
 
-  // Loading simple (puedes hacerlo más fino si quieres)
+  // Loading simple
   if (loadingUser) {
     return (
       <MainLayout
@@ -300,6 +300,7 @@ useEffect(() => {
       activeRoute="Stats"
       onNavigate={(route) => navigation.navigate(route as any)}
     >
+      {/* Barra segmentada para cambiar entre metas y rachas */}
       <View style={styles.segmentWrapper}>
         <GoalsStreaksSegmentBar
           activeSegment={activeSegment}
@@ -315,6 +316,7 @@ useEffect(() => {
         showsVerticalScrollIndicator={false}
       >
         {activeSegment === 'goals' ? (
+          // Segmento: METAS
           !hasGoals ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>Aún no tienes metas</Text>
@@ -344,10 +346,15 @@ useEffect(() => {
             />
           )
         ) : (
+          // Segmento: RACHAS
           <StatsStreaksSection
             streakItems={streakItems}
             onContinue={(id) =>
               navigation.navigate('StreakDetail' as any, { streakId: id })
+            }
+            // Nuevo callback para el botón "Crear racha"
+            onCreateStreak={() =>
+              navigation.navigate('CreateStreak' as any)
             }
           />
         )}

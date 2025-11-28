@@ -20,3 +20,21 @@ export type RouteStackHomeParamList = {
   CreateGoal: undefined;
   EditGoal: { goalId: string };
 }; 
+
+export type RouteStackMessagesParamList = {
+  MessagesMain: undefined;
+  Chat: { chatId: string };
+};
+
+export type RouteStackProfileParamList = {
+  ProfileMain: undefined;
+  EditProfile: undefined;
+  Settings: undefined;
+};
+
+export type RouteStackStatsParamList = {
+  StatsMain: undefined;
+  CreateGoal: undefined;
+  StreakDetail: { streakId: string };
+  CreateStreak: undefined;
+};

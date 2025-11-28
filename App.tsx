@@ -85,7 +85,7 @@ function AppTabs({
           ),
         }}
       />
-
+{/* 
       <Tab.Screen
         name="Messages"
         component={MessagesStackNavigator}
@@ -96,7 +96,7 @@ function AppTabs({
             <MessageCircle size={size} color={color} />
           ),
         }}
-      />
+      /> */}
 
       <Tab.Screen
         name="Rankings"

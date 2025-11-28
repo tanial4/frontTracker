@@ -86,3 +86,88 @@ export interface streakBackEnd {
   startdate: string; // ISO
   endDate?: string; // ISO
 }
+
+/**
+ * Payload que usa el front (por ejemplo, CreateStreakForm).
+ * Nota: startdate va en minúscula, lo mapeamos a startDate para el backend.
+ */
+export interface CreateStreakRequest {
+  title: string;
+  description?: string;
+  startdate: string; // ISO
+  endDate?: string;  // ISO
+}
+
+/**
+ * Miembro de una racha, según lo que incluye listMine()
+ * (ajusta los campos si tu Prisma tiene otros nombres/propiedades).
+ */
+export interface StreakMember {
+  id: string;
+  userId: string;
+  role: 'OWNER' | 'MEMBER';
+  joinedAt: string; // ISO
+}
+
+/**
+ * Modelo base de una streak devuelta por el backend.
+ * El service listMine incluye los members, así que lo reflejamos aquí.
+ */
+export interface Streak {
+  id: string;
+  title: string;
+  description: string | null;
+  startDate: string; // ISO
+  endDate: string | null;
+  createdAt: string; // ISO
+  createdById: string;
+  members: StreakMember[];
+}
+
+/**
+ * Check-in de racha (streakCheckin) devuelto por listCheckins() o recordCheckin()
+ */
+export interface StreakCheckin {
+  id: string;
+  streakId: string;
+  userId: string;
+  date: string;    // ISO normalizado a día
+  done: boolean;
+  metadata: any | null;
+}
+
+/**
+ * DTO para registrar un check-in de racha.
+ * Coincide con RecordStreakCheckinDto en el backend:
+ *  - date: string ISO
+ *  - done?: boolean
+ *  - metadata?: any
+ */
+export interface RecordCheckinRequest {
+  date: string;       // ISO
+  done?: boolean;
+  metadata?: any;
+}
+
+/**
+ * Parámetros para listar checkins de una racha.
+ * Coincide con ListStreakCheckinsDto (memberId, from, to).
+ */
+export interface ListCheckinsParams {
+  memberId?: string;
+  from?: string; // ISO
+  to?: string;   // ISO
+}
+
+/**
+ * Respuesta del endpoint de estadísticas de racha para un miembro.
+ * Viene de statsForMember(): { userId, current, longest, totalDone }
+ */
+export interface StreakStats {
+  userId: string;
+  current: number;
+  longest: number;
+  totalDone: number;
+}
+
+
