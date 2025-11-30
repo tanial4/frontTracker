@@ -25,7 +25,7 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { getMe, PublicUser } from '../../services/authApi'; // ajusta la ruta real
 import { listGoals,GoalResponse } from '../../services/goalsApi';
 
-import {GoalCheckinResponse,, listCheckinsForGoal,} from "../../services/checkinsApi"
+import {createGoalCheckin, GoalCheckinResponse, listCheckinsForGoal,} from "../../services/checkinsApi"
 
 
 
@@ -104,7 +104,7 @@ export function HomeScreen() {
   }, []);
 
   //Estadisticas
-
+  
 
 useFocusEffect(
   useCallback(() => {
@@ -140,6 +140,38 @@ useFocusEffect(
     };
   }, [currentUser])
 );
+
+useEffect(() => {
+  if (!currentUser) return;
+  if (realGoals.length === 0) return;
+
+  const fetchStats = async () => {
+    try {
+      const now = new Date();
+      const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
+
+      const fromDate = new Date();
+      fromDate.setDate(now.getDate() - 30);
+      const from = fromDate.toISOString().slice(0, 10);
+
+      // pedir stats por cada meta
+      const entries = await Promise.all(
+        realGoals.map(async (g) => {
+          const stats = await getGoalProgress(g.id, { from, to });
+          return [g.id, stats] as const;
+        })
+      );
+
+      setGoalStats(Object.fromEntries(entries));
+      console.log('[HomeScreen] Stats cargadas:', entries);
+    } catch (err) {
+      console.error('Error al cargar stats de metas:', err);
+    }
+  };
+
+  fetchStats();
+}, [currentUser, realGoals]);
+
 
 
 const checkinsForProgress = useMemo<FrontCheckin[]>(() => {
