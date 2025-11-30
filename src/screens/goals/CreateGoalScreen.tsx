@@ -12,7 +12,7 @@ import {
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
 
 import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { globalLayout } from '../../styles/GlobalStyles';
@@ -23,12 +23,12 @@ import { GoalSchema, GoalFormType } from '../../schemas/createGoalSchema';
 
 import { GOAL_TEMPLATES } from '../../data/GoalsTypes';
 import {  ActivityCategory, GoalTemplate } from '../../types/goal';
-import { RouteStackHomeParamList, RouteStackStatsParamList } from '../../components/navigation/types';
+
 import { createGoal } from '../../services/goalsApi';
 import TemplateCard from '../../components/goals/templateGoaldCard';
 import { CategoryResponse, listCategories } from '../../services/categoriesApi';
 
-type HomeNavProp = BottomTabNavigationProp<RouteStackStatsParamList, 'StatsMain'>;
+
 
 interface CreateGoalScreenProps {
   onGoBack?: () => void;
@@ -39,7 +39,7 @@ export function CreateGoalScreen({
   onGoBack,
   onGoalCreated,
 }: CreateGoalScreenProps) {
-  const navigation = useNavigation<HomeNavProp>();
+  const navigation = useNavigation();
 
   const [selectedTemplate, setSelectedTemplate] = useState<
     GoalTemplate | undefined
@@ -92,7 +92,8 @@ const allCategoriesTyped: ActivityCategory[] = categories.map((c) => ({
     if (onGoBack) {
       onGoBack();
     } else {
-      navigation.navigate('StatsMain');
+      
+      (navigation as any).goBack()
     }
   };
 
@@ -132,7 +133,7 @@ const allCategoriesTyped: ActivityCategory[] = categories.map((c) => ({
       onGoalCreated(data);
     }
 
-    navigation.navigate('StatsMain');
+    (navigation as any).goBack()
   } catch (error: any) {
     console.error(
       'Error creando meta:',

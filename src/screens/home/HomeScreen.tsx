@@ -1,5 +1,5 @@
 // src/screens/home/HomeScreen.tsx
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { RootTabParamList } from '../../components/navigation/types';
 
@@ -25,7 +25,7 @@ import { BRAND_COLORS as COLORS } from '../../styles/Colors';
 import { getMe, PublicUser } from '../../services/authApi'; // ajusta la ruta real
 import { listGoals,GoalResponse } from '../../services/goalsApi';
 
-import {GoalCheckinResponse,createGoalCheckin, listCheckinsForGoal,} from "../../services/checkinsApi"
+import {GoalCheckinResponse,, listCheckinsForGoal,} from "../../services/checkinsApi"
 
 
 
@@ -105,72 +105,42 @@ export function HomeScreen() {
 
   //Estadisticas
 
-  useEffect(() => {
-  if (!currentUser) return;
-  if (realGoals.length === 0) return;
 
-  const fetchStats = async () => {
-    try {
-      // opcional: definir explícitamente un rango, o dejar que el back use el default (últimos 30 días)
-      const now = new Date();
-      const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
-      const fromDate = new Date();
-      fromDate.setDate(now.getDate() - 30);
-      const from = fromDate.toISOString().slice(0, 10);
+useFocusEffect(
+  useCallback(() => {
+    if (!currentUser) return;
 
-      const entries = await Promise.all(
-        realGoals.map(async (g) => {
-          const stats = await getGoalProgress(g.id, { from, to });
-          return [g.id, stats] as const;
-        })
-      );
-
-      setGoalStats(Object.fromEntries(entries));
-      console.log('Stats desde backend:', entries);
-    } catch (err) {
-      console.error('Error al cargar stats de metas', err);
-    }
-  };
-
-  fetchStats();
-}, [currentUser, realGoals]);
-
-
-  useEffect(() => {
-    if (!currentUser) return; // todavía no sabemos quién es
-
-    const fetchGoals = async () => {
+    const fetchData = async () => {
       try {
-        const goals = await listGoals(); // llama GET /goals
+        // 1) Metas
+        const goals = await listGoals();
         setRealGoals(goals);
-        console.log('Metas desde backend:', goals);
+        console.log('Metas desde backend (focus):', goals);
+
+        // 2) Checkins de todas las metas
+        if (goals.length > 0) {
+          const allByGoal = await Promise.all(
+            goals.map((g) => listCheckinsForGoal(g.id))
+          );
+          const all = allByGoal.flat();
+          setRealCheckins(all);
+          console.log('Checkins globales (focus):', all);
+        } else {
+          setRealCheckins([]);
+        }
       } catch (error) {
-        console.error('Error al obtener /goals', error);
+        console.error('Error al cargar metas/checkins en focus:', error);
       }
     };
 
-    fetchGoals();
-  }, [currentUser]);
+    fetchData();
 
-  useEffect(() => {
-  if (!currentUser) return;
-  if (realGoals.length === 0) return;
+    return () => {
+      // opcional: cancelar peticiones si usaras AbortController
+    };
+  }, [currentUser])
+);
 
-  const fetchAllCheckins = async () => {
-    try {
-      const allByGoal = await Promise.all(
-        realGoals.map((g) => listCheckinsForGoal(g.id))
-      );
-      const all = allByGoal.flat();
-      setRealCheckins(all);
-      console.log('Checkins globales desde backend:', all);
-    } catch (error) {
-      console.error('Error al obtener historial de checkins:', error);
-    }
-  };
-
-  fetchAllCheckins();
-}, [currentUser, realGoals])
 
 const checkinsForProgress = useMemo<FrontCheckin[]>(() => {
   if (!currentUser) return [];
@@ -201,6 +171,7 @@ const todayCheckinsForUi = useMemo<FrontCheckin[]>(() => {
     return d.getTime() === today.getTime();
   });
 }, [checkinsForProgress]);
+
 
   const goalsForProgress = useMemo<FrontGoal[]>(() => {
   if (!currentUser) return [];
@@ -233,7 +204,7 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
     if (stats) {
       if (stats.completion !== null && stats.completion !== undefined) {
         // el back ya calculó completion normalizado 0–1
-        percentage = stats.completion * 100;
+        percentage = Math.round(stats.completion * 100);
       } else if (stats.totalCheckins > 0) {
         // fallback: porcentaje de checkins marcados como "hechos"
         percentage = (stats.doneCount / stats.totalCheckins) * 100;
@@ -254,12 +225,17 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
 
   // 3) Inicializar selección con las primeras metas
   useEffect(() => {
-    if (goalProgressItems.length > 0 && selectedGoalIds.length === 0) {
-      setSelectedGoalIds(
-        goalProgressItems.slice(0, MAX_SELECTED).map((g) => g.id)
-      );
-    }
-  }, [goalProgressItems, selectedGoalIds.length]);
+  if (goalProgressItems.length === 0) return;
+
+  setSelectedGoalIds((prev) => {
+    // Si ya había selección, la respetamos
+    if (prev.length > 0) return prev;
+
+    // Solo la primera vez (o cuando no había nada) inicializamos
+    return goalProgressItems.slice(0, MAX_SELECTED).map((g) => g.id);
+  });
+}, [goalProgressItems]);
+
 
   const hasGoals = goalProgressItems.length > 0;
 
@@ -279,9 +255,17 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
     (navigation as any).navigate('CreateGoalScreen');
   };
 
-  const visibleGoals = goalProgressItems.filter((g) =>
-    selectedGoalIds.includes(g.id)
-  );
+  const visibleGoals = useMemo(() => {
+  if (goalProgressItems.length === 0) return [];
+
+  // Si no hay ninguna meta seleccionada, mostramos todas por defecto
+  if (selectedGoalIds.length === 0) {
+    return goalProgressItems;
+  }
+
+  return goalProgressItems.filter((g) => selectedGoalIds.includes(g.id));
+}, [goalProgressItems, selectedGoalIds]);
+
 
   // 4) Mientras carga el usuario, algo simple
   if (loadingUser) {
@@ -339,29 +323,41 @@ const goalProgressItems = useMemo<GoalProgressItem[]>(() => {
               visibleItems={visibleGoals}
               allGoals={goalsForProgress}
               allCategories={MOCK_CATEGORIES}
-              allCheckins={todayCheckinsForUi}
+              allCheckins={checkinsForProgress}
               currentUserId={currentUser?.id ?? ''}
-              onCheckin={async (goalId) => {       // 👈 AQUÍ va el async
-                try {
-                // 1️⃣ Buscar la meta real por ID
-                const goal = realGoals.find((g) => g.id === goalId);
-                if (!goal) {
-                  console.warn('Meta no encontrada para check-in', goalId);
-                  return;
-                }
+              onCheckin={async (goalId) => {
+    try {
+      const goal = realGoals.find((g) => g.id === goalId);
+      if (!goal) {
+        console.warn('Meta no encontrada para check-in', goalId);
+        return;
+      }
 
-                const newCheckin = await createGoalCheckin(goal);
+      // 1️⃣ Crear check-in en el back
+      const newCheckin = await createGoalCheckin(goal);
 
-                setRealCheckins((prev) => [...prev, newCheckin]);
+      // 2️⃣ Agregarlo al estado local
+      setRealCheckins((prev) => [...prev, newCheckin]);
 
-                // Esto recalcula:
-                // - checkinsForProgress
-                // - goalProgressItems
-                // => gráfica y lista de hoy se actualizan
-              } catch (err: any) {
-                console.error('Error al hacer check-in:', err?.response?.data ?? err);
-              }
-              }}
+      // 3️⃣ Recalcular stats SOLO de esa meta (no hace falta todas)
+      const now = new Date();
+      const to = now.toISOString().slice(0, 10); // YYYY-MM-DD
+      const fromDate = new Date();
+      fromDate.setDate(now.getDate() - 30);
+      const from = fromDate.toISOString().slice(0, 10);
+
+      const stats = await getGoalProgress(goal.id, { from, to });
+
+      setGoalStats((prev) => ({
+        ...prev,
+        [goal.id]: stats,
+      }));
+
+      console.log('[HomeScreen] Check-in creado y stats actualizadas para', goal.id);
+    } catch (err: any) {
+      console.error('Error al hacer check-in:', err?.response?.data ?? err);
+    }
+  }}
             />
           </>
         )}

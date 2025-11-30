@@ -21,7 +21,7 @@ export async function getTodayCheckins(date?: string) {
 
 export async function createGoalCheckin(goal: GoalResponse) {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalizado a medianoche
+  const iso = today.toISOString();; // normalizado a medianoche
 
   // Payload base
   let payload: {
@@ -31,19 +31,19 @@ export async function createGoalCheckin(goal: GoalResponse) {
     done?: boolean;
   } = {
     goalId: goal.id,
-    date: today.toISOString(), // ✅ IsDateString válido
+    date: iso, // ✅ IsDateString válido
   };
 
-  if (goal.targetType === 'COUNT' || goal.targetType === 'WEEKLY') {
-    // Estas metas requieren `value >= 1`
-    const value = goal.targetValue ?? 1;
-    payload.value = value;
-    // `done` lo calcula el backend según value >= targetValue
-  } else {
-    // DAILY / BOOLEAN
-    // Aquí NO mandamos value (para no violar validateAccordingToGoal)
+  if (goal.targetType === 'WEEKLY' || goal.targetType === 'COUNT') {
+    payload.value = 1; // un "paso" cumplido
+  }
+
+  // Para DAILY / BOOLEAN podemos mandar done = true directamente
+  if (goal.targetType === 'DAILY' || goal.targetType === 'BOOLEAN') {
     payload.done = true;
   }
+
+  console.log('[createGoalCheckin] Enviando DTO:', payload);
 
   const { data } = await api.post<GoalCheckinResponse>('/checkins', payload);
   return data;
